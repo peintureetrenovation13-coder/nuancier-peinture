@@ -1,14 +1,27 @@
-import { useState } from "react";
-
-
-
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import emailjs from "@emailjs/browser";
 
 /* ═══ BRAND ═══════════════════════════════════════════════════ */
 const G = {
-  bg:"#FAF9F4", white:"#FFFFFF", gold:"#B8935A", goldLt:"#D4B483",
-  goldDk:"#8B6A35", black:"#0C0B09", ink:"#2A2520", gray:"#6B6560",
-  muted:"#9A948E", border:"#E4DDD4", light:"#F2EDE6",
+  bg:         "#FAFAF8",
+  surface:    "#F5F3EF",
+  surfaceHi:  "#EDE9E2",
+  gold:       "#C8973A",
+  goldLt:     "rgba(200,151,58,0.10)",
+  goldBorder: "rgba(200,151,58,0.30)",
+  border:     "rgba(0,0,0,0.08)",
+  white:      "#FFFFFF",
+  text:       "#1A1A1A",
+  muted:      "#6B6560",
+  subtle:     "#A09890",
+  gray:       "#8B8580",
+  ink:        "#0A0A0A",
 };
+const EJSID = "service_1kdzm42";
+const EJSTPL = "template_1vw2wy9";
+const EJSKEY = "io5BMwdmKvvfq8fKc";
+const MAIN_URL = "https://project-atmue-j53ocer2e-peintureetrenovation13-2501s-projects.vercel.app/";
 
 /* ═══ LOGO ════════════════════════════════════════════════════ */
 const Logo = ({ size=64 }) => (
@@ -45,25 +58,6 @@ const Logo = ({ size=64 }) => (
   </svg>
 );
 
-/* ═══ CONTACT BAR (affiché sur toutes les pages) ═══════════ */
-const Contact = () => (
-  <div style={{background:G.gold,padding:"10px 20px",display:"flex",alignItems:"center",justifyContent:"center",gap:32,flexWrap:"wrap"}}>
-    {[
-      {icon:"📞", label:"06 16 70 57 57", href:"tel:+33616705757"},
-      {icon:"✉️", label:"peintureetrenovation13@gmail.com", href:"mailto:peintureetrenovation13@gmail.com"},
-      {icon:"📍", label:"Pays d'Aix-en-Provence", href:null},
-    ].map((c,i)=>(
-      <div key={i} style={{display:"flex",alignItems:"center",gap:7}}>
-        <span style={{fontSize:13}}>{c.icon}</span>
-        {c.href
-          ? <a href={c.href} style={{fontFamily:"'Jost',sans-serif",fontSize:11,fontWeight:500,color:G.white,letterSpacing:"0.5px",textDecoration:"none"}}>{c.label}</a>
-          : <span style={{fontFamily:"'Jost',sans-serif",fontSize:11,color:G.white,letterSpacing:"0.5px"}}>{c.label}</span>
-        }
-      </div>
-    ))}
-  </div>
-);
-
 /* ═══ PALETTES ════════════════════════════════════════════════ */
 const PALETTES = [
   { id:"blancs", nom:"Blancs de Provence", ambiance:"Lumineux · Intemporel",
@@ -84,269 +78,116 @@ const PALETTES = [
   { id:"nuits", nom:"Nuits Profondes", ambiance:"Audacieux · Luxueux",
     couleurs:[{nom:"Nuit Provençale",hex:"#2C3A4A",ref:"CRO-5062"},{nom:"Bleu Marine",hex:"#2A4060",ref:"CRO-5074"},{nom:"Vert Bouteille",hex:"#2A4030",ref:"CRO-5083"},{nom:"Anthracite Chaud",hex:"#3A3830",ref:"CRO-5091"}],
     desc:"Pour les audacieux. Un mur foncé valorise vos meubles et objets.", piece:"Salon · Chambre adulte · Bibliothèque" },
-  { id:"tendance", nom:"Tendance 2025", ambiance:"Luxe éditorial · AD / Elle Déco", emoji:"✦",
-    couleurs:[
-      {nom:"Mocha Mousse",    hex:"#A07862", ref:"CRO-T001"},
-      {nom:"Truffe Chaude",   hex:"#7D6455", ref:"CRO-T012"},
-      {nom:"Parchemin",       hex:"#EDE0CC", ref:"CRO-T023"},
-      {nom:"Grès Fumé",       hex:"#B0A090", ref:"CRO-T034"},
-    ],
+  { id:"tendance", nom:"Tendance 2025", ambiance:"Luxe éditorial · AD / Elle Déco",
+    couleurs:[{nom:"Mocha Mousse",hex:"#A07862",ref:"CRO-T001"},{nom:"Truffe Chaude",hex:"#7D6455",ref:"CRO-T012"},{nom:"Parchemin",hex:"#EDE0CC",ref:"CRO-T023"},{nom:"Grès Fumé",hex:"#B0A090",ref:"CRO-T034"}],
     desc:"Inspiré de Vogue Living et AD. Mocha Mousse (Pantone 2025), terres profondes et matières naturelles.", piece:"Séjour · Chambre · Entrée" },
-  { id:"zen", nom:"Wabi-Sabi & Matières", ambiance:"Minimalisme japonais · Impermanence", emoji:"🍃",
-    couleurs:[
-      {nom:"Lin Cendré",      hex:"#D8CFBE", ref:"CRO-Z001"},
-      {nom:"Argile Rosée",    hex:"#C4A898", ref:"CRO-Z012"},
-      {nom:"Terre Verte",     hex:"#7A8C7A", ref:"CRO-Z023"},
-      {nom:"Charbon Doux",    hex:"#5A5550", ref:"CRO-Z034"},
-    ],
+  { id:"zen", nom:"Wabi-Sabi & Matières", ambiance:"Minimalisme japonais · Impermanence",
+    couleurs:[{nom:"Lin Cendré",hex:"#D8CFBE",ref:"CRO-Z001"},{nom:"Argile Rosée",hex:"#C4A898",ref:"CRO-Z012"},{nom:"Terre Verte",hex:"#7A8C7A",ref:"CRO-Z023"},{nom:"Charbon Doux",hex:"#5A5550",ref:"CRO-Z034"}],
     desc:"L'esthétique wabi-sabi : imperfection, matières brutes, calme profond. Tendance forte dans les intérieurs luxe 2025.", piece:"Chambre · Bureau · Salle de bain" },
-  { id:"velvet", nom:"Velvet & Couture", ambiance:"Haute couture · Profondeur chromatique", emoji:"♦",
-    couleurs:[
-      {nom:"Nuit Mauve",      hex:"#3D3050", ref:"CRO-V001"},
-      {nom:"Rose Sépia",      hex:"#C09880", ref:"CRO-V012"},
-      {nom:"Lait de Nacre",   hex:"#F0E8DC", ref:"CRO-V023"},
-      {nom:"Rouille Précieux",hex:"#9A5A40", ref:"CRO-V034"},
-    ],
-    desc:"Profondeur, sensualité et raffinement. Les teintes des maisons de couture et hôtels 5 étoiles. Pour des intérieurs signature.", piece:"Salon · Chambre parentale · Dressing" },
+  { id:"velvet", nom:"Velvet & Couture", ambiance:"Haute couture · Profondeur chromatique",
+    couleurs:[{nom:"Nuit Mauve",hex:"#3D3050",ref:"CRO-V001"},{nom:"Rose Sépia",hex:"#C09880",ref:"CRO-V012"},{nom:"Lait de Nacre",hex:"#F0E8DC",ref:"CRO-V023"},{nom:"Rouille Précieux",hex:"#9A5A40",ref:"CRO-V034"}],
+    desc:"Profondeur, sensualité et raffinement. Les teintes des maisons de couture et hôtels 5 étoiles.", piece:"Salon · Chambre parentale · Dressing" },
 ];
 
-/* ═══ PRODUITS (préparations PUIS peintures) ═══════════════ */
+/* ═══ PRODUITS ════════════════════════════════════════════════ */
 const PRODUITS = [
-  /* ── PRÉPARATIONS ── */
-  {
-    id:"ratissage", categorie:"preparation", icon:"🏗️",
-    nom:"Ratissage complet — Proliss F200", marque:"Soffec · Proliss F200 — Enduit 3 en 1",
-    tag:"Rénovation complète · Notre technique phare",
-    couleur:"#8B6A35",
-    pour:"Murs & plafonds · Tous supports · Neuf & rénovation",
-    lien:"https://www.sofec.net/fr/proliss-f200",
-    points:[
-      "Passage de plusieurs couches d'enduit à la grande liseuse sur l'intégralité des murs et plafonds",
-      "Enduit Proliss : aspect tendu parfait — finition haute qualité",
-      "Très blanc, très couvrant — mat profond",
-      "Rendement 1,2 à 1,5 kg/m² · Séchage 6 à 48h",
-      "Classement au feu A2-S1, d0 — conforme DTU",
-    ],
+  { id:"ratissage", categorie:"preparation", icon:"🏗️", nom:"Ratissage complet — Proliss F200", marque:"Soffec · Proliss F200 — Enduit 3 en 1", tag:"Rénovation complète · Notre technique phare", couleur:"#C8973A",
+    pour:"Murs & plafonds · Tous supports · Neuf & rénovation", lien:"https://www.sofec.net/fr/proliss-f200",
+    points:["Passage de plusieurs couches d'enduit à la grande liseuse sur l'intégralité des murs et plafonds","Enduit Proliss : aspect tendu parfait — finition haute qualité","Très blanc, très couvrant — mat profond","Rendement 1,2 à 1,5 kg/m² · Séchage 6 à 48h","Classement au feu A2-S1, d0 — conforme DTU"],
     process:"1. Voile de révélateur (100–200 g/m²) → 2. Révision soignée des défauts → 3. Couche finale à 80 cm (1,3 kg/m²) sans lissage",
     limites:["Application mécanisée (pompe Airless)","Supports doivent être sains, secs, propres"],
-    conseil:"Quand on rénove sérieusement, on ratisse tout. C'est la technique qui garantit des murs parfaitement tendus avant la mise en peinture.",
-  },
-  {
-    id:"prep_ponctu", categorie:"preparation", icon:"🔧",
-    nom:"Préparation ponctuelle", marque:"Soffec · Enduit fibré & résiné",
-    tag:"Support avec petits défauts",
-    couleur:"#7A8860",
-    pour:"Murs avec quelques fissures, petits trous, irrégularités · Murs neufs en plaque de plâtre déjà jointée",
-    lien:"https://sofec.net/produit/enduit-de-rebouchage/",
-    points:[
-      "Rebouchage ponctuel des fissures et petits trous",
-      "Enduit fibré pour les fissures — évite la reprise",
-      "Enduit résiné pour adhérence sur supports difficiles",
-      "Toile de rénovation si nécessaire sur zones fragilisées",
-      "Ponçage général avant mise en peinture",
-      "Sur plaque de plâtre neuve déjà jointée : impression + ponçage léger des joints avant mise en peinture",
-    ],
+    conseil:"Quand on rénove sérieusement, on ratisse tout. C'est la technique qui garantit des murs parfaitement tendus avant la mise en peinture." },
+  { id:"prep_ponctu", categorie:"preparation", icon:"🔧", nom:"Préparation ponctuelle", marque:"Soffec · Enduit fibré & résiné", tag:"Support avec petits défauts", couleur:"#7A8860",
+    pour:"Murs avec quelques fissures, petits trous, irrégularités · Murs neufs en plaque de plâtre déjà jointée", lien:"https://sofec.net/produit/enduit-de-rebouchage/",
+    points:["Rebouchage ponctuel des fissures et petits trous","Enduit fibré pour les fissures — évite la reprise","Enduit résiné pour adhérence sur supports difficiles","Toile de rénovation si nécessaire sur zones fragilisées","Ponçage général avant mise en peinture","Sur plaque de plâtre neuve déjà jointée : impression + ponçage léger des joints avant mise en peinture"],
     process:"1. Dépoussiérage général → 2. Rebouchage fissures (enduit fibré) → 3. Ponçage général → 4. Dépoussiérage → 5. Impression Maoline\nSur BA13 neuf : 1. Vérification joints → 2. Ponçage léger → 3. Dépoussiérage → 4. Impression Maoline",
     limites:["Ne traite pas les supports très dégradés","Pour rénovation lourde : préférer le ratissage complet"],
-    conseil:"Pour les murs en bon état général avec quelques défauts ponctuels. Résultat propre sans passer en ratissage complet.",
-  },
-  {
-    id:"poncage", categorie:"preparation", icon:"✦",
-    nom:"Préparation légère", marque:"Support sain · Ponçage général",
-    tag:"Support en bon état · Finition C",
-    couleur:"#5878A8",
-    pour:"Murs propres · Ancienne peinture adhérente · Neuf",
-    lien:"https://www.zolpan.fr/catalogue-produits/peintures/interieur/impressions/maoline",
-    points:[
-      "Ponçage général pour ouvrir et homogénéiser le support",
-      "Dépoussiérage soigné à la brosse puis aspirateur",
-      "Rebouchage ponctuel des trous et petits défauts",
-      "Lissage des angles et raccords",
-      "Séchage complet avant mise en peinture",
-    ],
+    conseil:"Pour les murs en bon état général avec quelques défauts ponctuels. Résultat propre sans passer en ratissage complet." },
+  { id:"poncage", categorie:"preparation", icon:"✦", nom:"Préparation légère", marque:"Support sain · Ponçage général", tag:"Support en bon état · Finition C", couleur:"#5878A8",
+    pour:"Murs propres · Ancienne peinture adhérente · Neuf", lien:"https://www.zolpan.fr/catalogue-produits/peintures/interieur/impressions/maoline",
+    points:["Ponçage général pour ouvrir et homogénéiser le support","Dépoussiérage soigné à la brosse puis aspirateur","Rebouchage ponctuel des trous et petits défauts","Lissage des angles et raccords","Séchage complet avant mise en peinture"],
     process:"1. Ponçage général → 2. Dépoussiérage → 3. Rebouchage ponctuel trous → 4. Mise en peinture",
     limites:["Uniquement pour supports en bon état","Ne traite pas les fissures importantes"],
-    conseil:"La préparation Finition C : pour un support sain, un ponçage général et le rebouchage des trous suffisent. La mise en peinture avec Maoline démarre ensuite.",
-  },
-  /* ── PEINTURES ── */
-  {
-    id:"maoline", categorie:"peinture", icon:"◉",
-    nom:"Maoline", marque:"Zolpan",
-    tag:"Impression universelle · Base obligatoire avant mise en peinture",
-    couleur:"#C8A050",
-    pour:"Murs & plafonds · Tous supports intérieurs préparés",
-    lien:"https://www.zolpan.fr/catalogue-produits/peintures/interieur/impressions/maoline",
-    points:[
-      "Impression acrylique universelle haut de gamme",
-      "Accroche parfaite sur tous supports préparés",
-      "Pénètre et consolide le support — évite les reprises",
-      "Blanc très couvrant — sèche en 2h",
-      "Base indispensable avant Maotop Mat ou Class 1 Velours",
-      "Rendement 10–12 m²/L",
-    ],
+    conseil:"La préparation Finition C : pour un support sain, un ponçage général et le rebouchage des trous suffisent." },
+  { id:"maoline", categorie:"peinture", icon:"◉", nom:"Maoline", marque:"Zolpan", tag:"Impression universelle · Base obligatoire avant mise en peinture", couleur:"#C8A050",
+    pour:"Murs & plafonds · Tous supports intérieurs préparés", lien:"https://www.zolpan.fr/catalogue-produits/peintures/interieur/impressions/maoline",
+    points:["Impression acrylique universelle haut de gamme","Accroche parfaite sur tous supports préparés","Pénètre et consolide le support — évite les reprises","Blanc très couvrant — sèche en 2h","Base indispensable avant Maotop Mat ou Class 1 Velours","Rendement 10–12 m²/L"],
     process:"1 couche Maoline → 2 couches de finition (Maotop Mat ou Class 1 Velours)",
     limites:["Ne pas utiliser comme finition finale","Support doit être sain, propre et dépoussiéré"],
-    conseil:"L'impression qu'on passe systématiquement avant chaque mise en peinture. Elle garantit l'adhérence et l'uniformité du fond — la base de tout résultat impeccable.",
-  },
-  {
-    id:"maotop", categorie:"peinture", icon:"⭐",
-    nom:"Maotop Mat", marque:"Zolpan",
-    tag:"Notre produit phare · Finition mate",
-    couleur:G.gold,
-    pour:"Murs & plafonds intérieurs · Toutes pièces",
-    lien:"https://www.zolpan.fr/produit/maotop-mat",
-    points:[
-      "Mat lessivable classe 1 — se nettoie sans jamais lustrer",
-      "Séchage 30 min · Recouvrable dans la journée",
-      "Aspect pommelé fin d'une grande élégance",
-      "Label NF Environnement · Locaux occupés · HQE",
-      "1 200+ teintes nuancier Cromology Zolpan",
-      "Rendement 10–12 m²/L",
-    ],
+    conseil:"L'impression qu'on passe systématiquement avant chaque mise en peinture. Elle garantit l'adhérence et l'uniformité du fond." },
+  { id:"maotop", categorie:"peinture", icon:"⭐", nom:"Maotop Mat", marque:"Zolpan", tag:"Notre produit phare · Finition mate", couleur:G.gold,
+    pour:"Murs & plafonds intérieurs · Toutes pièces", lien:"https://www.zolpan.fr/produit/maotop-mat",
+    points:["Mat lessivable classe 1 — se nettoie sans jamais lustrer","Séchage 30 min · Recouvrable dans la journée","Aspect pommelé fin d'une grande élégance","Label NF Environnement · Locaux occupés · HQE","1 200+ teintes nuancier Cromology Zolpan","Rendement 10–12 m²/L"],
     process:"Impression Maoline → 2 couches Maotop Mat",
     limites:["Uniquement murs & plafonds intérieurs","Support à préparer selon état"],
-    conseil:"Notre peinture signature. Mat haut de gamme et lessivable classe 1 — le meilleur des deux mondes.",
-  },
-  {
-    id:"class1", categorie:"peinture", icon:"◆",
-    nom:"Class 1 Velours", marque:"Tollens",
-    tag:"Finition velours lessivable",
-    couleur:"#7060A0",
-    pour:"Murs & plafonds · Pièces sèches et humides",
-    lien:"https://www.tollens.com/produit/class-1-velours",
-    points:[
-      "Velours lessivable classe 1 — très haute résistance",
-      "Garnissante et opacifiante — finition A ou B selon support",
-      "Sans reprise — facilement retouchable",
-      "Glisse remarquable — grand confort d'application",
-      "Applicable rouleau ou airless",
-      "Adaptée pièces sèches et humides",
-    ],
+    conseil:"Notre peinture signature. Mat haut de gamme et lessivable classe 1 — le meilleur des deux mondes." },
+  { id:"class1", categorie:"peinture", icon:"◆", nom:"Class 1 Velours", marque:"Tollens", tag:"Finition velours lessivable", couleur:"#7060A0",
+    pour:"Murs & plafonds · Pièces sèches et humides", lien:"https://www.tollens.com/produit/class-1-velours",
+    points:["Velours lessivable classe 1 — très haute résistance","Garnissante et opacifiante — finition A ou B selon support","Sans reprise — facilement retouchable","Glisse remarquable — grand confort d'application","Applicable rouleau ou airless","Adaptée pièces sèches et humides"],
     process:"Impression Maoline → 2 couches Class 1 Velours",
     limites:["Préparation du support déterminante pour le rendu","Aspect velouté nécessite un bon fond"],
-    conseil:"La velours qu'on recommande pour les pièces à vivre. Douce à l'œil, résistante au quotidien.",
-  },
-  {
-    id:"ondilak", categorie:"peinture", icon:"◇",
-    nom:"Ondilak Collection", marque:"Zolpan",
-    tag:"Laque haute performance · Portes & menuiseries uniquement",
-    couleur:"#8060A0",
-    pour:"Portes · Menuiseries · Boiseries · Plinthes",
-    lien:"https://www.zolpan.fr/catalogue-produits/peintures/interieur/peintures-satinees/ondilak-collection-satin",
-    points:[
-      "Laque polyuréthane haut de gamme spéciale boiseries",
-      "Haut tendu, aspect lisse — profondeur des teintes",
-      "Résistance maximale aux chocs et tâches",
-      "Opacifiante dès la 1ère couche",
-      "Dépolluante — technologie anti-formaldéhyde",
-      "NF Env · Label Excell+ · Classe A+ · Classe 1 abrasion",
-      "4 finitions : mat, velours, satin, brillant",
-    ],
+    conseil:"La velours qu'on recommande pour les pièces à vivre. Douce à l'œil, résistante au quotidien." },
+  { id:"ondilak", categorie:"peinture", icon:"◇", nom:"Ondilak Collection", marque:"Zolpan", tag:"Laque haute performance · Portes & menuiseries uniquement", couleur:"#8060A0",
+    pour:"Portes · Menuiseries · Boiseries · Plinthes", lien:"https://www.zolpan.fr/catalogue-produits/peintures/interieur/peintures-satinees/ondilak-collection-satin",
+    points:["Laque polyuréthane haut de gamme spéciale boiseries","Haut tendu, aspect lisse — profondeur des teintes","Résistance maximale aux chocs et tâches","Opacifiante dès la 1ère couche","Dépolluante — technologie anti-formaldéhyde","NF Env · Label Excell+ · Classe A+ · Classe 1 abrasion"],
     process:"Primaire si nécessaire → 2 couches Ondilak Collection",
     limites:["Réservée aux menuiseries et boiseries — pas pour les murs","Fond parfaitement préparé obligatoire"],
-    conseil:"Notre laque dédiée aux portes et menuiseries. Résultat digne d'une finition de carrosserie sur vos boiseries.",
-  },
-  {
-    id:"cross", categorie:"peinture", icon:"◈",
-    nom:"Cross Velouté", marque:"Tollens",
-    tag:"Primaire universel multi-supports",
-    couleur:"#6A8A50",
-    pour:"Bois · Métaux · PVC · Béton · Supports difficiles",
-    lien:"https://www.tollens.com/produit/cross",
-    points:[
-      "Primaire universel 2 en 1 — impression & finition",
-      "Adhérence multi-supports sans primaire préalable",
-      "Isole les taches courantes (nicotine, suie)",
-      "Intérieur et extérieur · Pièces sèches et humides",
-      "Recouvrable par toute finition acrylique ou glycéro",
-    ],
+    conseil:"Notre laque dédiée aux portes et menuiseries. Résultat digne d'une finition de carrosserie sur vos boiseries." },
+  { id:"cross", categorie:"peinture", icon:"◈", nom:"Cross Velouté", marque:"Tollens", tag:"Primaire universel multi-supports", couleur:"#6A8A50",
+    pour:"Bois · Métaux · PVC · Béton · Supports difficiles", lien:"https://www.tollens.com/produit/cross",
+    points:["Primaire universel 2 en 1 — impression & finition","Adhérence multi-supports sans primaire préalable","Isole les taches courantes (nicotine, suie)","Intérieur et extérieur · Pièces sèches et humides","Recouvrable par toute finition acrylique ou glycéro"],
     process:"Directement sur le support difficile → Ondilak ou autre finition",
     limites:["Ne pas utiliser sur RPE, RSE, ITE","Préférer en blanc ou teinte claire en primaire"],
-    conseil:"Le primaire de confiance pour tous les supports difficiles avant la pose d'Ondilak sur les menuiseries.",
-  },
+    conseil:"Le primaire de confiance pour tous les supports difficiles avant la pose d'Ondilak sur les menuiseries." },
 ];
 
-/* ═══ TARIFS ESTIMATIF ════════════════════════════════════════ */
+/* ═══ TARIFS ══════════════════════════════════════════════════ */
 const TARIFS_PREP = {
   bon:     { label:"Finition C — Préparation légère : ponçage général + rebouchage des trous", min:2,  max:10  },
   moyen:   { label:"Finition B — Préparation ponctuelle : ponçage + rebouchage + ratissage partiel", min:12, max:20 },
-  complet: { label:"Finition A — Ratissage complet Proliss F200 (3 en 1)",          min:19, max:28 },
+  complet: { label:"Finition A — Ratissage complet Proliss F200 (3 en 1)", min:19, max:28 },
 };
 const TARIFS_PEINTURE = {
-  mat:     { label:"Maotop Mat (Zolpan) — Maoline + 2 couches",     min:18, max:27 },
+  mat:     { label:"Maotop Mat (Zolpan) — Maoline + 2 couches", min:18, max:27 },
   velours: { label:"Class 1 Velours (Tollens) — Maoline + 2 couches", min:18, max:27 },
 };
-const TARIF_PORTE = { min:80, max:140 }; // par porte, menuiseries comprises
+const TARIF_PORTE = { min:80, max:140 };
 
 /* ═══ HARMONIES ══════════════════════════════════════════════ */
 const h2h = hex=>{let r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=((g-b)/d+(g<b?6:0))/6;break;case g:h=((b-r)/d+2)/6;break;case b:h=((r-g)/d+4)/6;break;}}return[h*360,s*100,l*100];};
 const h2hex=(h,s,l)=>{s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));return"#"+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,"0")).join("");};
 
-/* ═══ ROOM — Salon SVG dessiné en perspective ════════════════ */
+/* ═══ ROOM SVG ════════════════════════════════════════════════ */
 const Room = ({ mur="#E8E2D6", plafond="#F5F2EC", sol="#C4A882", accent=null }) => {
   const ac = accent||mur;
   return (
     <div style={{position:"relative",width:"100%",paddingTop:"56%"}}>
       <svg viewBox="0 0 1000 560" style={{position:"absolute",top:0,left:0,width:"100%",height:"100%",display:"block"}}>
         <defs>
-          <linearGradient id="lwS" x1="100%" y1="0%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#000" stopOpacity="0"/>
-            <stop offset="100%" stopColor="#000" stopOpacity="0.15"/>
-          </linearGradient>
-          <linearGradient id="rwS" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#000" stopOpacity="0"/>
-            <stop offset="100%" stopColor="#000" stopOpacity="0.12"/>
-          </linearGradient>
-          <linearGradient id="cS" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#000" stopOpacity="0.05"/>
-            <stop offset="100%" stopColor="#000" stopOpacity="0"/>
-          </linearGradient>
-          <linearGradient id="fS" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#000" stopOpacity="0.10"/>
-            <stop offset="100%" stopColor="#000" stopOpacity="0.02"/>
-          </linearGradient>
+          <linearGradient id="lwS" x1="100%" y1="0%" x2="0%" y2="0%"><stop offset="0%" stopColor="#000" stopOpacity="0"/><stop offset="100%" stopColor="#000" stopOpacity="0.15"/></linearGradient>
+          <linearGradient id="rwS" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#000" stopOpacity="0"/><stop offset="100%" stopColor="#000" stopOpacity="0.12"/></linearGradient>
+          <linearGradient id="cS" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#000" stopOpacity="0.05"/><stop offset="100%" stopColor="#000" stopOpacity="0"/></linearGradient>
+          <linearGradient id="fS" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stopColor="#000" stopOpacity="0.10"/><stop offset="100%" stopColor="#000" stopOpacity="0.02"/></linearGradient>
         </defs>
-
-        {/* ══ PLAFOND ══ */}
         <polygon points="0,0 1000,0 1000,70 665,95 195,95 0,55" fill={plafond}/>
         <polygon points="0,0 1000,0 1000,70 665,95 195,95 0,55" fill="url(#cS)"/>
-
-        {/* ══ MUR FOND ══ */}
         <polygon points="195,95 665,95 665,395 195,395" fill={mur}/>
-
-        {/* ══ MUR GAUCHE ══ */}
         <polygon points="0,55 195,95 195,395 0,560" fill={mur}/>
         <polygon points="0,55 195,95 195,395 0,560" fill="url(#lwS)"/>
-
-        {/* ══ MUR DROIT / ACCENT ══ */}
         <polygon points="665,95 1000,70 1000,560 665,395" fill={ac}/>
         <polygon points="665,95 1000,70 1000,560 665,395" fill="url(#rwS)"/>
-
-        {/* ══ SOL avec lignes parquet ══ */}
         <polygon points="195,395 665,395 1000,560 0,560" fill={sol}/>
         <polygon points="195,395 665,395 1000,560 0,560" fill="url(#fS)"/>
-        {[0.18,0.36,0.54,0.72,0.88].map((t,i)=>{
-          const y=395+t*165, xl=195*(1-t), xr=665+335*t;
-          return <line key={i} x1={xl} y1={y} x2={xr} y2={y} stroke="#0000001A" strokeWidth="1"/>;
-        })}
-        {[0.1,0.25,0.4,0.55,0.7,0.85].map((u,i)=>{
-          const xb=195+u*470, xf=9+868*u;
-          return <line key={i} x1={xb} y1={395} x2={xf} y2={560} stroke="#0000001A" strokeWidth="0.8"/>;
-        })}
-
-        {/* ══ PLINTHES ══ */}
+        {[0.18,0.36,0.54,0.72,0.88].map((t,i)=>{const y=395+t*165,xl=195*(1-t),xr=665+335*t;return <line key={i} x1={xl} y1={y} x2={xr} y2={y} stroke="#0000001A" strokeWidth="1"/>;}) }
+        {[0.1,0.25,0.4,0.55,0.7,0.85].map((u,i)=>{const xb=195+u*470,xf=9+868*u;return <line key={i} x1={xb} y1={395} x2={xf} y2={560} stroke="#0000001A" strokeWidth="0.8"/>;}) }
         <polygon points="196,381 664,381 664,395 196,395" fill="#0000001C"/>
         <polygon points="0,548 195,382 195,395 0,560" fill="#00000018"/>
         <polygon points="665,382 1000,547 1000,560 665,395" fill="#00000015"/>
-
-        {/* ══ ARÊTES ══ */}
         <line x1="195" y1="95" x2="195" y2="395" stroke="#00000030" strokeWidth="3"/>
         <line x1="665" y1="95" x2="665" y2="395" stroke="#00000028" strokeWidth="3"/>
         <line x1="0" y1="55" x2="195" y2="95" stroke="#00000022" strokeWidth="2"/>
         <line x1="195" y1="95" x2="665" y2="95" stroke="#00000018" strokeWidth="2"/>
         <line x1="665" y1="95" x2="1000" y2="70" stroke="#00000022" strokeWidth="2"/>
-
-        {/* ══ FENÊTRE (mur gauche) ══ */}
         <polygon points="15,78 172,108 172,305 15,375" fill="#F0F8FF"/>
         <polygon points="19,82 168,111 168,301 19,371" fill="#C4E0EE"/>
         <line x1="17" y1="193" x2="170" y2="212" stroke="white" strokeWidth="5"/>
@@ -355,9 +196,6 @@ const Room = ({ mur="#E8E2D6", plafond="#F5F2EC", sol="#C4A882", accent=null }) 
         <polygon points="15,78 172,108 172,305 15,375" fill="none" stroke="white" strokeWidth="6"/>
         <polygon points="0,57 22,62 20,382 0,395" fill="#F5F0EA" opacity="0.92"/>
         <polygon points="158,109 195,97 195,308 160,305" fill="#F5F0EA" opacity="0.72"/>
-        <polygon points="168,118 195,102 195,118 188,308 170,298" fill="#FFFFFF07"/>
-
-        {/* ══ CANAPÉ ══ */}
         <ellipse cx="415" cy="389" rx="198" ry="6" fill="#00000022"/>
         <rect x="240" y="374" width="7" height="14" fill="#786050" rx="1"/>
         <rect x="587" y="374" width="7" height="14" fill="#786050" rx="1"/>
@@ -374,8 +212,6 @@ const Room = ({ mur="#E8E2D6", plafond="#F5F2EC", sol="#C4A882", accent=null }) 
         <polygon points="338,382 400,382 398,386 336,386" fill="#8A8070"/>
         <circle cx="480" cy="384" r="7" fill="#E8DDD0"/>
         <circle cx="480" cy="384" r="5" fill="#C8C0B0"/>
-
-        {/* ══ PLANTE (mur droit) ══ */}
         <polygon points="748,375 788,370 783,395 752,396" fill="#D8C8B0"/>
         <polygon points="752,378 784,373 783,390 752,390" fill="#C4B09A"/>
         <line x1="768" y1="375" x2="762" y2="310" stroke="#5A4030" strokeWidth="5"/>
@@ -384,273 +220,226 @@ const Room = ({ mur="#E8E2D6", plafond="#F5F2EC", sol="#C4A882", accent=null }) 
         <ellipse cx="754" cy="278" rx="21" ry="14" fill="#2E5830" transform="rotate(-40,754,278)"/>
         <ellipse cx="782" cy="320" rx="19" ry="13" fill="#426A3A" transform="rotate(30,782,320)"/>
         <ellipse cx="742" cy="325" rx="16" ry="11" fill="#3A6232" transform="rotate(-15,742,325)"/>
-
-        {/* ══ CADRES + ÉTAGÈRE (mur droit) ══ */}
         <polygon points="825,245 940,237 942,244 827,251" fill="#C0A870"/>
         <polygon points="858,230 876,229 876,244 858,245" fill="#D8C8A8"/>
         <polygon points="880,229 895,228 895,243 880,244" fill="#C8B898" opacity="0.8"/>
         <polygon points="835,145 918,139 920,218 837,222" fill="#E8E0D0" stroke="#C8A870" strokeWidth="3.5"/>
         <polygon points="840,150 914,145 915,213 841,217" fill="#E0D8C8" opacity="0.55"/>
         <polygon points="837,228 920,222 922,240 839,244" fill="#D8D0C0" stroke="#C8A870" strokeWidth="2.5"/>
-
       </svg>
     </div>
   );
 };
 
-/* ═══ CALCULATEUR ═════════════════════════════════════════════ */
+/* ═══ CALCULATEUR ════════════════════════════════════════════ */
 function Calculateur({ T, divider, onDevis }) {
-  const [f, setF] = useState({ surface:"", hauteur:"2.50", portesMenuis:"0", pieces:"1", etat:"bon", finition:"mat" });
+  const [f, setF] = useState({ surface:"", pieces:1, portesMenuis:"0", etat:"bon", finition:"mat" });
   const [res, setRes] = useState(null);
+  const [sendOpen, setSendOpen]     = useState(false);
+  const [sendNom, setSendNom]       = useState("");
+  const [sendTel, setSendTel]       = useState("");
+  const [sendMsg, setSendMsg]       = useState("");
+  const [sendStatus, setSendStatus] = useState("idle");
   const set = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const envoyerAxel = async () => {
+    if(!sendNom.trim()) return;
+    setSendStatus("sending");
+    const recap = `[Estimatif Nuancier]\n\nNom : ${sendNom} | Tél : ${sendTel||"—"}\nSurface : ${res.sol} m² | Pièces : ${f.pieces} | Portes : ${res.pm}\nPréparation : ${res.prep.label}\nFinition : ${res.fin.label}\nEstimation : ${res.totalMin.toLocaleString()} – ${res.totalMax.toLocaleString()} €\nMessage : ${sendMsg||"—"}`;
+    try {
+      await emailjs.send(EJSID, EJSTPL, { nom:sendNom, telephone:sendTel||"—", email_client:"—", conversation:recap }, EJSKEY);
+    } catch(e) { console.error(e); }
+    setSendStatus("sent");
+  };
 
   const calc = () => {
     const sol=parseFloat(f.surface)||0; if(sol<=0) return;
-    const h=parseFloat(f.hauteur)||2.5;
-    const pm=parseInt(f.portesMenuis)||0, pcs=parseInt(f.pieces)||1;
-    // ×1.25 : correction non-carré (ratio moyen 1:1.5 des pièces réelles)
-    const cote=Math.sqrt(sol/pcs), perim=Math.round(cote*4*1.25*pcs);
-    const mNet=Math.round(perim*h);
+    const pm=parseInt(f.portesMenuis)||0;
+    const mNet=Math.round(sol*2.8);
     const total=mNet+sol;
-    const litres=Math.ceil(total/5*1.1);
     const prep=TARIFS_PREP[f.etat], fin=TARIFS_PEINTURE[f.finition];
     const pMin=Math.round(total*prep.min), pMax=Math.round(total*prep.max);
     const fMin=Math.round(total*fin.min),  fMax=Math.round(total*fin.max);
     const mMin=pm*TARIF_PORTE.min, mMax=pm*TARIF_PORTE.max;
-    setRes({sol,mNet,plafond:sol,total,litres,perim,prep,fin,pMin,pMax,fMin,fMax,mMin,mMax,pm,totalMin:pMin+fMin+mMin,totalMax:pMax+fMax+mMax});
+    setRes({sol,mNet,plafond:sol,total,prep,fin,pMin,pMax,fMin,fMax,pm,mMin,mMax,totalMin:pMin+fMin+mMin,totalMax:pMax+fMax+mMax});
   };
 
-  const inp = {width:"100%",border:"none",borderBottom:`1px solid ${G.gold}`,padding:"9px 0",fontSize:14,fontWeight:300,background:"transparent",color:G.black,fontFamily:"'Jost',sans-serif",outline:"none"};
+  const inp = {width:"100%",border:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:"9px 0",fontSize:14,fontWeight:300,background:"transparent",color:G.text,fontFamily:"Inter,sans-serif",outline:"none"};
   const sel = {...inp,cursor:"pointer",appearance:"none"};
 
   return (
-    <div className="fade">
+    <div>
       <div style={{textAlign:"center",marginBottom:52}}>
         <div style={T.tag}>Votre projet</div>
         {divider}
         <h1 style={{...T.h1,fontSize:"clamp(34px,5vw,54px)"}}>Estimatif<br/><em>de votre chantier</em></h1>
         {divider}
-        <p style={{...T.p,maxWidth:520,margin:"0 auto"}}>Renseignez la surface au sol — les murs sont calculés sans déduction. Les menuiseries sont chiffrées séparément.</p>
+        <p style={{...T.p,maxWidth:520,margin:"0 auto"}}>Renseignez la surface au sol et le nombre de pièces (sanitaires et couloirs inclus) — nous faisons le calcul pour vous !</p>
       </div>
-
       {!res ? (
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,border:`1px solid ${G.border}`}}>
-
-          {/* Gauche — dimensions */}
-          <div style={{borderRight:`1px solid ${G.border}`}}>
-            <div style={{padding:"24px 28px",background:G.white,borderBottom:`1px solid ${G.border}`}}>
-              <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:18}}>Dimensions de la pièce</div>
-              <div style={{marginBottom:18}}>
-                <label style={{...T.label,display:"block",marginBottom:8}}>Surface au sol (m²)</label>
-                <input style={inp} type="number" placeholder="ex: 25" value={f.surface} onChange={e=>set("surface",e.target.value)}/>
-                <div style={{...T.p,fontSize:10,marginTop:4}}>Pour plusieurs pièces, indiquez le total</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1,border:`1px solid ${G.goldBorder}`}} className="calcul-grid">
+          <div style={{borderRight:`1px solid ${G.goldBorder}`}}>
+            <div style={{padding:"24px 28px",background:G.surface,borderBottom:`1px solid ${G.goldBorder}`}}>
+              <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:18}}>Votre logement</div>
+              <div style={{marginBottom:22}}>
+                <label style={{...T.label,display:"block",marginBottom:8}}>Surface totale au sol (m²)</label>
+                <input style={inp} type="number" placeholder="ex: 65" value={f.surface} onChange={e=>set("surface",e.target.value)}/>
               </div>
               <div style={{marginBottom:18}}>
-                <label style={{...T.label,display:"block",marginBottom:8}}>Hauteur sous plafond</label>
-                <select style={sel} value={f.hauteur} onChange={e=>set("hauteur",e.target.value)}>
-                  {["2.20","2.30","2.40","2.50","2.60","2.70","2.80","3.00","3.20","3.50"].map(v=>(
-                    <option key={v} value={v}>{v} m</option>
-                  ))}
-                </select>
+                <label style={{...T.label,display:"block",marginBottom:10}}>
+                  Nombre de pièces
+                  <span style={{...T.p,fontSize:10,fontWeight:300,textTransform:"none",letterSpacing:0,marginLeft:6}}>sanitaires et couloirs inclus</span>
+                </label>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <motion.button whileTap={{scale:0.88}} onClick={()=>set("pieces",Math.max(1,f.pieces-1))}
+                    style={{width:36,height:36,border:`1px solid ${G.goldBorder}`,background:"transparent",color:G.text,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:300}}>
+                    −
+                  </motion.button>
+                  <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:30,fontWeight:400,color:G.gold,minWidth:28,textAlign:"center",lineHeight:1}}>
+                    {f.pieces}
+                  </span>
+                  <motion.button whileTap={{scale:0.88}} onClick={()=>set("pieces",Math.min(20,f.pieces+1))}
+                    style={{width:36,height:36,border:`1px solid ${G.goldBorder}`,background:"transparent",color:G.text,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:300}}>
+                    +
+                  </motion.button>
+                  <span style={{...T.p,fontSize:12}}>pièce{f.pieces>1?"s":""}</span>
+                </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr",gap:14,marginBottom:18}}>
-                {[{k:"pieces",l:"Nombre de pièces",max:8}].map(it=>(
-                  <div key={it.k}>
-                    <label style={{...T.label,display:"block",marginBottom:8}}>{it.l}</label>
-                    <select style={sel} value={f[it.k]} onChange={e=>set(it.k,e.target.value)}>
-                      {Array.from({length:it.max+1},(_,i)=><option key={i} value={i}>{i}</option>)}
-                    </select>
-                  </div>
-                ))}
-              </div>
-              <div style={{marginBottom:4}}>
-                <label style={{...T.label,display:"block",marginBottom:8}}>Portes & menuiseries à peindre <span style={{color:G.gold}}>(Ondilak)</span></label>
-                <select style={sel} value={f.portesMenuis} onChange={e=>set("portesMenuis",e.target.value)}>
-                  {Array.from({length:11},(_,i)=><option key={i} value={i}>{i} porte{i>1?"s":""}</option>)}
-                </select>
-                <div style={{...T.p,fontSize:10,marginTop:4}}>Comprend préparation (Cross) + 2 couches Ondilak Collection</div>
+              <div style={{marginBottom:18}}>
+                <label style={{...T.label,display:"block",marginBottom:8}}>Portes &amp; menuiseries</label>
+                <input style={inp} type="number" min="0" max="20" value={f.portesMenuis} onChange={e=>set("portesMenuis",e.target.value)}/>
               </div>
             </div>
-
-            {/* Aperçu live */}
-            {f.surface && (
-              <div style={{padding:"18px 28px",background:G.light}}>
-                <div style={{...T.tag,fontSize:9,marginBottom:12}}>Surfaces estimées</div>
-                {(()=>{
-                  const s=parseFloat(f.surface)||0, h=parseFloat(f.hauteur)||2.5;
-                  const p=Math.round(Math.sqrt(s/(parseInt(f.pieces)||1))*4*(parseInt(f.pieces)||1));
-                  const mn=Math.round(p*1.25*h);
-                  return(
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                      {[{l:"Surface murs",v:`${mn} m²`,g:false},{l:"Plafond",v:`${s} m²`,g:false},{l:"Total à traiter",v:`${mn+s} m²`,g:true},{l:"Peinture estimée",v:`≈${Math.ceil((mn+s)/5*1.1)} L`,g:false}].map((r,i)=>(
-                        <div key={i} style={{padding:"8px 12px",background:r.g?G.gold:G.white,border:`1px solid ${G.border}`}}>
-                          <div style={{...T.p,fontSize:10,color:r.g?"#FFF9":G.muted}}>{r.l}</div>
-                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:300,color:r.g?G.white:G.ink,marginTop:2}}>{r.v}</div>
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })()}
-              </div>
-            )}
+            <div style={{padding:"24px 28px",background:G.surface}}>
+              <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:18}}>Qualité de préparation</div>
+              {Object.entries(TARIFS_PREP).map(([k,v])=>(
+                <div key={k} onClick={()=>set("etat",k)} style={{display:"flex",gap:12,padding:"12px",marginBottom:8,cursor:"pointer",border:`1px solid ${f.etat===k?G.gold:G.goldBorder}`,background:f.etat===k?G.goldLt:"transparent"}}>
+                  <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${f.etat===k?G.gold:G.muted}`,background:f.etat===k?G.gold:"transparent",flexShrink:0,marginTop:1}}/>
+                  <div>
+                    <div style={{...T.label,fontSize:9,marginBottom:3}}>{v.label}</div>
+                    <div style={{...T.p,fontSize:10,color:G.gold}}>{v.min}–{v.max} €/m²</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-
-          {/* Droite — type de prestation */}
           <div>
-            <div style={{padding:"24px 28px",background:G.white,borderBottom:`1px solid ${G.border}`}}>
-              <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:16}}>État du support</div>
-              {[
-                {v:"bon",     l:"Finition C — Préparation légère",           d:"Ancienne peinture saine, pas de fissures → Ponçage général + rebouchage ponctuel des trous"},
-                {v:"moyen",   l:"Finition B — Préparation ponctuelle",    d:"Fissures, trous, murs neufs BA13 déjà jointés → Ponçage général + rebouchage + ratissage partiel si besoin"},
-                {v:"complet", l:"Finition A — Rénovation complète",       d:"Fissures importantes, support très dégradé → Ponçage général + ratissage complet Proliss F200 (3 en 1)"},
-              ].map(opt=>(
-                <div key={opt.v} onClick={()=>set("etat",opt.v)}
-                  style={{display:"flex",gap:14,alignItems:"flex-start",padding:"12px 14px",marginBottom:8,border:`1px solid ${f.etat===opt.v?G.gold:G.border}`,background:f.etat===opt.v?G.light:G.bg,cursor:"pointer",transition:"all .15s"}}>
-                  <div style={{width:18,height:18,border:`2px solid ${f.etat===opt.v?G.gold:G.muted}`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}}>
-                    {f.etat===opt.v&&<div style={{width:8,height:8,borderRadius:"50%",background:G.gold}}/>}
-                  </div>
+            <div style={{padding:"24px 28px",background:G.surface,borderBottom:`1px solid ${G.goldBorder}`}}>
+              <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:18}}>Type de finition</div>
+              {Object.entries(TARIFS_PEINTURE).map(([k,v])=>(
+                <div key={k} onClick={()=>set("finition",k)} style={{display:"flex",gap:12,padding:"12px",marginBottom:8,cursor:"pointer",border:`1px solid ${f.finition===k?G.gold:G.goldBorder}`,background:f.finition===k?G.goldLt:"transparent"}}>
+                  <div style={{width:14,height:14,borderRadius:"50%",border:`2px solid ${f.finition===k?G.gold:G.muted}`,background:f.finition===k?G.gold:"transparent",flexShrink:0,marginTop:1}}/>
                   <div>
-                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,fontWeight:400,color:G.black,marginBottom:2}}>{opt.l}</div>
-                    <div style={{...T.p,fontSize:10}}>{opt.d}</div>
+                    <div style={{...T.label,fontSize:9,marginBottom:3}}>{v.label}</div>
+                    <div style={{...T.p,fontSize:10,color:G.gold}}>{v.min}–{v.max} €/m²</div>
                   </div>
                 </div>
               ))}
             </div>
-
-            <div style={{padding:"24px 28px",background:G.white,borderBottom:`1px solid ${G.border}`}}>
-              <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:16}}>Finition murs & plafonds</div>
-              {[
-                {v:"mat",    l:"Maotop Mat",       d:"Finition mate classe 1 — notre produit phare",        marque:"Zolpan"},
-                {v:"velours",l:"Class 1 Velours",  d:"Finition veloutée lessivable classe 1",               marque:"Tollens"},
-              ].map(opt=>(
-                <div key={opt.v} onClick={()=>set("finition",opt.v)}
-                  style={{display:"flex",gap:14,alignItems:"flex-start",padding:"12px 14px",marginBottom:8,border:`1px solid ${f.finition===opt.v?G.gold:G.border}`,background:f.finition===opt.v?G.light:G.bg,cursor:"pointer",transition:"all .15s"}}>
-                  <div style={{width:18,height:18,border:`2px solid ${f.finition===opt.v?G.gold:G.muted}`,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:2}}>
-                    {f.finition===opt.v&&<div style={{width:8,height:8,borderRadius:"50%",background:G.gold}}/>}
-                  </div>
-                  <div>
-                    <div style={{display:"flex",alignItems:"baseline",gap:8}}>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,color:G.black}}>{opt.l}</div>
-                      <div style={{...T.tag,fontSize:8,color:G.gold}}>{opt.marque}</div>
-                    </div>
-                    <div style={{...T.p,fontSize:10,marginTop:2}}>{opt.d}</div>
-                  </div>
-                </div>
-              ))}
-              <div style={{...T.p,fontSize:10,marginTop:8,padding:"8px 12px",background:G.light,borderLeft:`2px solid ${G.gold}`}}>
-                Les menuiseries (portes) sont toujours réalisées avec l'<strong>Ondilak Collection Zolpan</strong> — chiffrées séparément ci-contre.
-              </div>
-            </div>
-
-            <div style={{padding:"18px 28px",background:G.bg}}>
-              <button onClick={calc} disabled={!f.surface}
-                style={{...T.btn,width:"100%",background:f.surface?G.gold:"#ccc",color:G.white,border:"none",padding:"14px",opacity:f.surface?1:0.55,transition:"all .2s",cursor:f.surface?"pointer":"default"}}>
-                Calculer mon estimatif →
-              </button>
+            <div style={{padding:"24px 28px",background:G.surface}}>
+              <p style={{...T.p,fontSize:11,fontStyle:"italic",marginBottom:24,borderLeft:`2px solid ${G.gold}`,paddingLeft:12}}>
+                Ces tarifs sont indicatifs et ne remplacent pas un devis sur mesure. Chaque chantier est unique — la visite gratuite permet d'affiner précisément.
+              </p>
+              <motion.button whileHover={{scale:1.03,boxShadow:`0 0 24px rgba(200,151,58,.3)`}} whileTap={{scale:0.97}}
+                onClick={calc} style={{width:"100%",background:G.gold,color:G.white,border:"none",padding:"14px",fontSize:11,fontWeight:500,letterSpacing:"1.5px",textTransform:"uppercase",cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
+                Calculer →
+              </motion.button>
             </div>
           </div>
         </div>
-
       ) : (
-        <div>
-          {/* Surfaces */}
-          <div style={{border:`1px solid ${G.border}`,marginBottom:1}}>
-            <div style={{padding:"18px 28px",background:G.white,borderBottom:`1px solid ${G.border}`}}>
-              <div style={{...T.tag,fontSize:9}}>Surfaces calculées</div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontStyle:"italic",color:G.muted,marginTop:4}}>
-                {res.sol} m² au sol · {f.hauteur} m · {f.pieces} pièce{f.pieces>1?"s":""} · {f.fenetres} fenêtre{f.fenetres>1?"s":""} · {f.portes} porte{f.portes>1?"s":(parseInt(f.portes)===0?"":"")}{parseInt(f.portesMenuis)>0?` · ${f.portesMenuis} porte${f.portesMenuis>1?"s":""} à peindre (menuiseries)`:""}
-              </div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:1,background:G.border}}>
-              {[
-                {l:"Surface murs",    v:`${res.mNet} m²`,   s:"murs complets",         g:false},
-                {l:"Plafond",         v:`${res.plafond} m²`,s:"surface au sol",        g:false},
-                {l:"Total murs+plafond",v:`${res.total} m²`,s:"surface à traiter",     g:true},
-                {l:"Peinture estimée",v:`≈ ${res.litres} L`,s:"+10% de marge inclus",  g:false},
-              ].map((c,i)=>(
-                <div key={i} style={{background:c.g?G.gold:G.white,padding:"18px 20px"}}>
-                  <div style={{...T.p,fontSize:9,color:c.g?"#FFF9":G.muted,marginBottom:5}}>{c.l}</div>
-                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:300,color:c.g?G.white:G.black}}>{c.v}</div>
-                  <div style={{...T.p,fontSize:9,color:c.g?"#FFF7":G.muted,marginTop:3}}>{c.s}</div>
+        <div style={{border:`1px solid ${G.goldBorder}`}}>
+          <div style={{padding:"24px 28px",background:G.surface,borderBottom:`1px solid ${G.goldBorder}`}}>
+            <div style={{...T.tag,fontSize:9,marginBottom:14}}>Surfaces calculées</div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:16}} className="res-grid">
+              {[{l:"Sol",v:`${res.sol} m²`},{l:"Murs nets",v:`${res.mNet} m²`},{l:"Plafond",v:`${res.plafond} m²`},{l:"Total à peindre",v:`${res.total} m²`}].map(s=>(
+                <div key={s.l} style={{textAlign:"center",padding:"14px",border:`1px solid ${G.goldBorder}`}}>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:400,color:G.gold}}>{s.v}</div>
+                  <div style={{...T.p,fontSize:10,marginTop:4}}>{s.l}</div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Détail */}
-          <div style={{border:`1px solid ${G.border}`,marginBottom:1}}>
-            <div style={{padding:"16px 28px",background:G.white,borderBottom:`1px solid ${G.border}`}}>
-              <div style={{...T.tag,fontSize:9}}>Détail de l'estimatif</div>
-            </div>
-            {/* Préparation */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr auto",alignItems:"center",padding:"16px 28px",borderBottom:`1px solid ${G.border}`,background:G.white}}>
-              <div>
-                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
-                  <div style={{...T.tag,fontSize:8,background:G.light,padding:"2px 8px"}}>Préparation</div>
-                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,color:G.black}}>{res.prep.label}</div>
+          <div style={{padding:"24px 28px",background:G.surface,borderBottom:`1px solid ${G.goldBorder}`}}>
+            <div style={{...T.tag,fontSize:9,marginBottom:14}}>Estimation budget</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1}} className="budget-grid">
+              {[{l:res.prep.label,min:res.pMin,max:res.pMax},{l:res.fin.label,min:res.fMin,max:res.fMax},...(res.pm>0?[{l:`${res.pm} porte(s)/menuiserie(s)`,min:res.mMin,max:res.mMax}]:[])].map((r,i)=>(
+                <div key={i} style={{padding:"16px",background:G.surfaceHi}}>
+                  <div style={{...T.p,fontSize:11,marginBottom:8}}>{r.l}</div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,color:G.gold}}>{r.min.toLocaleString()} – {r.max.toLocaleString()} €</div>
                 </div>
-                <div style={{...T.p,fontSize:10,color:G.muted}}>Tarif : {res.prep.min}–{res.prep.max} €/m² · sur {res.total} m²</div>
-              </div>
-              <div style={{textAlign:"right",paddingLeft:20}}>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:300,color:G.ink}}>{res.pMin.toLocaleString("fr-FR")} – {res.pMax.toLocaleString("fr-FR")} €</div>
-                <div style={{...T.p,fontSize:9,color:G.muted}}>HT · MO + matériaux</div>
-              </div>
+              ))}
             </div>
-            {/* Finition */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr auto",alignItems:"center",padding:"16px 28px",borderBottom:`1px solid ${G.border}`,background:G.white}}>
+            <div style={{padding:"20px",background:G.goldLt,border:`1px solid ${G.gold}`,marginTop:1,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
               <div>
-                <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
-                  <div style={{...T.tag,fontSize:8,background:G.light,padding:"2px 8px"}}>Mise en peinture</div>
-                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,color:G.black}}>{res.fin.label}</div>
-                </div>
-                <div style={{...T.p,fontSize:10,color:G.muted}}>Tarif : {res.fin.min}–{res.fin.max} €/m² · sur {res.total} m² (Maoline + 2 couches)</div>
+                <div style={{...T.tag,fontSize:9,marginBottom:4}}>Budget total estimé</div>
+                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:32,fontWeight:400,color:G.gold}}>{res.totalMin.toLocaleString()} – {res.totalMax.toLocaleString()} €</div>
               </div>
-              <div style={{textAlign:"right",paddingLeft:20}}>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:300,color:G.ink}}>{res.fMin.toLocaleString("fr-FR")} – {res.fMax.toLocaleString("fr-FR")} €</div>
-                <div style={{...T.p,fontSize:9,color:G.muted}}>HT · MO + matériaux</div>
-              </div>
+              <div style={{...T.p,fontSize:11,fontStyle:"italic",maxWidth:280}}>Estimation indicative fournitures + main-d'œuvre. Devis précis après visite gratuite.</div>
             </div>
-            {/* Menuiseries */}
-            {res.pm > 0 && (
-              <div style={{display:"grid",gridTemplateColumns:"1fr auto",alignItems:"center",padding:"16px 28px",borderBottom:`1px solid ${G.border}`,background:G.white}}>
-                <div>
-                  <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:4}}>
-                    <div style={{...T.tag,fontSize:8,background:"#F0E8F8",padding:"2px 8px",color:"#7060A0"}}>Menuiseries</div>
-                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:15,color:G.black}}>Ondilak Collection — {res.pm} porte{res.pm>1?"s":""}</div>
+          </div>
+          <AnimatePresence>
+            {sendOpen && sendStatus!=="sent" && (
+              <motion.div key="sendform" initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}}
+                transition={{duration:0.25}} style={{overflow:"hidden",borderTop:`1px solid ${G.goldBorder}`}}>
+                <div style={{padding:"22px 28px",background:G.surfaceHi}}>
+                  <div style={{...T.tag,fontSize:9,color:G.gold,marginBottom:16}}>Envoyer votre projet à Axel</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}} className="harm-inner">
+                    <div>
+                      <label style={{...T.label,display:"block",marginBottom:6}}>Votre prénom *</label>
+                      <input style={{width:"100%",border:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:"8px 0",fontSize:13,background:"transparent",color:G.text,fontFamily:"Inter,sans-serif",outline:"none"}}
+                        placeholder="ex: Marie" value={sendNom} onChange={e=>setSendNom(e.target.value)}/>
+                    </div>
+                    <div>
+                      <label style={{...T.label,display:"block",marginBottom:6}}>Téléphone</label>
+                      <input style={{width:"100%",border:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:"8px 0",fontSize:13,background:"transparent",color:G.text,fontFamily:"Inter,sans-serif",outline:"none"}}
+                        placeholder="06 00 00 00 00" value={sendTel} onChange={e=>setSendTel(e.target.value)}/>
+                    </div>
                   </div>
-                  <div style={{...T.p,fontSize:10,color:G.muted}}>Primaire si nécessaire + 2 couches Ondilak Collection · {TARIF_PORTE.min}–{TARIF_PORTE.max} €/porte</div>
+                  <div style={{marginBottom:16}}>
+                    <label style={{...T.label,display:"block",marginBottom:6}}>Message (optionnel)</label>
+                    <input style={{width:"100%",border:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:"8px 0",fontSize:13,background:"transparent",color:G.text,fontFamily:"Inter,sans-serif",outline:"none"}}
+                      placeholder="Précisions, disponibilités…" value={sendMsg} onChange={e=>setSendMsg(e.target.value)}/>
+                  </div>
+                  <div style={{padding:"10px 12px",background:G.goldLt,border:`1px solid ${G.goldBorder}`,marginBottom:14}}>
+                    <div style={{...T.p,fontSize:10}}>
+                      Récap : <strong style={{color:G.text}}>{res.sol} m²</strong> · {f.hauteur} m · {res.prep.label.split("—")[0].trim()} · {res.fin.label.split("—")[0].trim()} · <strong style={{color:G.gold}}>{res.totalMin.toLocaleString()} – {res.totalMax.toLocaleString()} €</strong>
+                    </div>
+                  </div>
+                  <motion.button whileHover={{scale:1.02,boxShadow:`0 0 20px rgba(200,151,58,.3)`}} whileTap={{scale:0.97}}
+                    onClick={envoyerAxel} disabled={sendStatus==="sending"||!sendNom.trim()}
+                    style={{...T.btn,width:"100%",background:G.gold,color:G.white,border:"none",padding:"12px",cursor:"pointer",opacity:sendStatus==="sending"||!sendNom.trim()?0.6:1,transition:"opacity .2s"}}>
+                    {sendStatus==="sending"?"Envoi en cours…":"Envoyer à Axel →"}
+                  </motion.button>
                 </div>
-                <div style={{textAlign:"right",paddingLeft:20}}>
-                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:20,fontWeight:300,color:G.ink}}>{res.mMin.toLocaleString("fr-FR")} – {res.mMax.toLocaleString("fr-FR")} €</div>
-                  <div style={{...T.p,fontSize:9,color:G.muted}}>HT · MO + matériaux</div>
-                </div>
-              </div>
+              </motion.div>
             )}
-            {/* TOTAL */}
-            <div style={{display:"grid",gridTemplateColumns:"1fr auto",alignItems:"center",padding:"20px 28px",background:G.light}}>
-              <div>
-                <div style={{...T.tag,fontSize:9,marginBottom:4}}>Total estimatif</div>
-                <div style={{...T.p,fontSize:11}}>Préparation + mise en peinture{res.pm>0?` + ${res.pm} menuiserie${res.pm>1?"s":""}`:""}  · HT indicatif</div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:28,fontWeight:300,color:G.gold}}>{res.totalMin.toLocaleString("fr-FR")} – {res.totalMax.toLocaleString("fr-FR")} €</div>
-                <div style={{...T.p,fontSize:9,color:G.muted}}>HT · main d'œuvre + matériaux inclus</div>
-                <div style={{...T.tag,fontSize:10,color:G.gold,marginTop:8,letterSpacing:"1px"}}>📞 06 16 70 57 57</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Disclaimer */}
-          <div style={{border:`1px solid ${G.border}`,padding:"18px 28px",background:G.white,marginBottom:1}}>
-            <div style={{borderLeft:`2px solid ${G.gold}`,paddingLeft:14}}>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,fontStyle:"italic",color:G.ink,marginBottom:5}}>Estimatif basé sur les prix du marché de la région Pays d'Aix-en-Provence — le devis définitif est établi après visite sur place.</div>
-              <p style={{...T.p,fontSize:11}}>Le tarif réel dépend de l'état exact du support, de l'accessibilité et de la configuration du chantier. La visite et le devis sont <strong>gratuits et sans engagement</strong>.</p>
-            </div>
-          </div>
-
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:1}}>
-            <button onClick={()=>setRes(null)} style={{...T.btn,background:"transparent",border:`1px solid ${G.border}`,color:G.gray,padding:"14px",fontSize:11,cursor:"pointer"}}>← Recommencer</button>
-            <button onClick={onDevis} style={{...T.btn,background:G.gold,color:G.white,border:"none",padding:"14px",fontSize:11,cursor:"pointer"}}>Demander un devis gratuit →</button>
+            {sendStatus==="sent" && (
+              <motion.div key="sendsuccess" initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} transition={{duration:0.3}}
+                style={{overflow:"hidden",borderTop:`1px solid ${G.goldBorder}`}}>
+                <div style={{padding:"22px 28px",background:G.goldLt,textAlign:"center"}}>
+                  <div style={{...T.tag,fontSize:10,marginBottom:8}}>✓ Envoyé avec succès</div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:300,color:G.text,lineHeight:1.5}}>
+                    Axel a bien reçu votre projet et vous contactera dans les 48h !
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:1}}>
+            <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
+              onClick={()=>{setRes(null);setSendOpen(false);setSendStatus("idle");setSendNom("");setSendTel("");setSendMsg("");}}
+              style={{background:"transparent",border:"none",borderRight:`1px solid ${G.goldBorder}`,color:G.muted,padding:"14px",fontSize:11,cursor:"pointer",fontFamily:"Inter,sans-serif",letterSpacing:"1px",textTransform:"uppercase"}}>
+              ← Recommencer
+            </motion.button>
+            <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}} onClick={()=>setSendOpen(o=>!o)}
+              style={{background:"transparent",border:"none",borderRight:`1px solid ${G.goldBorder}`,color:sendOpen?G.gold:G.text,padding:"14px",fontSize:11,cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:500,letterSpacing:"1.5px",textTransform:"uppercase",transition:"color .18s"}}>
+              {sendOpen?"Fermer ✕":"Envoyer à Axel →"}
+            </motion.button>
+            <motion.button whileHover={{scale:1.02,boxShadow:`0 0 20px rgba(200,151,58,.3)`}} whileTap={{scale:0.97}} onClick={onDevis}
+              style={{background:G.gold,color:G.white,border:"none",padding:"14px",fontSize:11,cursor:"pointer",fontFamily:"Inter,sans-serif",fontWeight:500,letterSpacing:"1.5px",textTransform:"uppercase"}}>
+              Devis gratuit →
+            </motion.button>
           </div>
         </div>
       )}
@@ -658,451 +447,843 @@ function Calculateur({ T, divider, onDevis }) {
   );
 }
 
-/* ═══ APP ═════════════════════════════════════════════════════ */
-export default function App() {
-  const [tab,setTab]=useState("calcul");
-  const [openPal,setOpenPal]=useState(null);
-  const [selColor,setSelColor]=useState(null);
-  const [openProd,setOpenProd]=useState(null);
-  const [visu,setVisu]=useState({mur:"#E8E2D6",plafond:"#F5F2EC",sol:"#C4A882",accent:null});
-  const [sel,setSel]=useState({couleurs:[],produit:null});
-  const [modal,setModal]=useState(false);
-  const [nom,setNom]=useState("");
-  const [piece,setPiece]=useState("");
-  const [sent,setSent]=useState(false);
+/* ═══ CHATBOT ═════════════════════════════════════════════════ */
+const HAS = (t, ...words) => words.some(w => t.includes(w));
 
-  const toggleC=c=>setSel(s=>({...s,couleurs:s.couleurs.find(x=>x.ref===c.ref)?s.couleurs.filter(x=>x.ref!==c.ref):[...s.couleurs,c]}));
-  const inSel=c=>sel.couleurs.some(x=>x.ref===c.ref);
-  const count=sel.couleurs.length+(sel.produit?1:0);
-  const allC=PALETTES.flatMap(p=>p.couleurs);
+const renderText = (text) => text.split("\n").map((line, i, arr) => (
+  <React.Fragment key={i}>{line}{i < arr.length - 1 && <br/>}</React.Fragment>
+));
 
-  const harm=selColor?(()=>{const [h,s,l]=h2h(selColor.hex);return{mono:[h2hex(h,s,Math.min(l+22,93)),selColor.hex,h2hex(h,s,Math.max(l-18,8))],analog:[h2hex((h-30+360)%360,s,l),selColor.hex,h2hex((h+30)%360,s,l)],compl:[selColor.hex,h2hex((h+180)%360,s,l)],triad:[selColor.hex,h2hex((h+120)%360,s,l),h2hex((h+240)%360,s,l)]};})():null;
+function FloatingChat() {
+  const [open, setOpen]               = useState(false);
+  const [msgs, setMsgs]               = useState([]);
+  const [input, setInput]             = useState("");
+  const [typing, setTyping]           = useState(false);
+  const [showCForm, setShowCForm]     = useState(false);
+  const [pendingCTA, setPendingCTA]   = useState(false);
+  const [contact, setContact]         = useState({ name:"", phone:"", email:"" });
+  const [contactSent, setContactSent] = useState(false);
+  const [phase, setPhase]             = useState("welcome");
+  const [devisData, setDevisData]     = useState({ type:"", desc:"", ville:"" });
+  const [quickBtns, setQuickBtns]     = useState(null);
+  const endRef = useRef(null);
 
-  const T={
-    tag:{fontFamily:"'Jost',sans-serif",fontSize:10,fontWeight:500,letterSpacing:"2.5px",textTransform:"uppercase",color:G.gold},
-    h1:{fontFamily:"'Cormorant Garamond',serif",fontWeight:300,letterSpacing:"-0.5px",color:G.black,lineHeight:1.1},
-    p:{fontFamily:"'Jost',sans-serif",fontSize:13,fontWeight:300,color:G.gray,lineHeight:1.75,letterSpacing:"0.2px"},
-    label:{fontFamily:"'Jost',sans-serif",fontSize:9,fontWeight:600,letterSpacing:"2px",textTransform:"uppercase",color:G.ink},
-    btn:{fontFamily:"'Jost',sans-serif",fontSize:10,fontWeight:500,letterSpacing:"1.5px",textTransform:"uppercase"},
+  useEffect(() => {
+    setMsgs([{ from:"bot", text:"Bonjour et bienvenue chez Peinture & Rénovation ! Je suis l'assistant d'Axel. Comment puis-je vous aider aujourd'hui ?" }]);
+    setQuickBtns([
+      { label:"Conseils couleur",  action:"couleur" },
+      { label:"Demander un devis", action:"devis" },
+      { label:"Nos services",      action:"services" },
+      { label:"Nous appeler",      action:"appeler" },
+    ]);
+  }, []);
+
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior:"smooth" }); }, [msgs, typing, showCForm, quickBtns]);
+
+  const botReply = (text, opts = {}) => {
+    const { cta=false, btns=null, newPhase=undefined } = opts;
+    setTyping(true);
+    setQuickBtns(null);
+    setTimeout(() => {
+      setMsgs(p => [...p, { from:"bot", text }]);
+      setTyping(false);
+      if (cta) setPendingCTA(true);
+      if (btns) setQuickBtns(btns);
+      if (newPhase !== undefined) setPhase(newPhase);
+    }, 600 + Math.random() * 300);
   };
-  const divider=<div style={{width:32,height:1,background:G.gold,margin:"18px auto"}}/>;
 
-  const preps=PRODUITS.filter(p=>p.categorie==="preparation");
-  const peints=PRODUITS.filter(p=>p.categorie==="peinture");
+  const TYPE_BTNS = [
+    { label:"Peinture int. / ext.", action:"type_peinture" },
+    { label:"Rénovation",           action:"type_reno" },
+    { label:"Travaux artistiques",  action:"type_art" },
+    { label:"Autre",                action:"type_autre" },
+  ];
+
+  const handleQuickBtn = (action) => {
+    setQuickBtns(null);
+    if (action === "couleur") {
+      setMsgs(p => [...p, { from:"user", text:"Conseils couleur" }]);
+      botReply("Nos palettes provençales s'adaptent à chaque pièce : Blancs de Provence pour un intérieur lumineux, Ocres & Terres du Sud pour une ambiance chaleureuse, Bleus & Lavande pour apaiser une chambre, Nuits Profondes pour un salon sophistiqué. Consultez notre nuancier juste au-dessus !", { btns:[{label:"Conseils par pièce", action:"pieces"},{label:"Tendances 2025", action:"tendance"}], newPhase:"chat" });
+    } else if (action === "pieces") {
+      setMsgs(p => [...p, { from:"user", text:"Conseils par pièce" }]);
+      botReply("Pour un salon : Ocres du Sud ou Nuits Profondes pour le caractère, Blancs de Provence pour agrandir.\nPour une chambre : Bleus & Lavande ou Wabi-Sabi pour le repos.\nPour la cuisine : Ocres ou Verts Garrigue.\nPour la salle de bain : Bleus ou tons pierre.", { newPhase:"chat" });
+    } else if (action === "tendance") {
+      setMsgs(p => [...p, { from:"user", text:"Tendances 2025" }]);
+      botReply("En 2025, les tons Wabi-Sabi et Velvet & Couture sont très demandés — naturels, chaleureux et intemporels. Le Mocha Mousse (Pantone 2025) et les terres profondes dominent les intérieurs haut de gamme. Consultez nos palettes Tendance 2025 dans le nuancier !", { newPhase:"chat" });
+    } else if (action === "devis") {
+      setMsgs(p => [...p, { from:"user", text:"Demander un devis" }]);
+      botReply("Avec grand plaisir ! Pour vous préparer un devis personnalisé, j'ai besoin de quelques infos. Commençons par le type de travaux :", { btns:TYPE_BTNS, newPhase:"devis_1" });
+    } else if (action === "services") {
+      setMsgs(p => [...p, { from:"user", text:"Nos services" }]);
+      botReply(
+        "Voici ce que nous réalisons :\n• Peinture intérieure & extérieure\n• Plâtrerie, enduits, ragréage\n• Revêtements sol & murs\n• Fresques murales & trompe l'œil\n• Travaux artistiques sur mesure\n\nNous faisons partie d'un groupe d'artisans coordonnant tout pour vous — de la peinture au gros œuvre.\n\nVous avez quelque chose en tête ?",
+        { btns:[{ label:"Demander un devis", action:"devis" }, { label:"Estimer le coût", action:"simulateur" }], newPhase:"chat" }
+      );
+    } else if (action === "appeler") {
+      setMsgs(p => [...p, { from:"user", text:"Nous appeler" }]);
+      botReply("Bien sûr ! Axel est joignable directement au 06 16 70 57 57, du lundi au samedi. Il prend le temps d'écouter chaque projet et sera ravi d'échanger avec vous !", { newPhase:"chat" });
+    } else if (action.startsWith("type_")) {
+      const labels = { type_peinture:"Peinture int. / ext.", type_reno:"Rénovation", type_art:"Travaux artistiques", type_autre:"Autre" };
+      const label = labels[action];
+      setMsgs(p => [...p, { from:"user", text:label }]);
+      setDevisData(d => ({...d, type:label}));
+      botReply("Super choix ! Pour mieux cerner votre projet, pouvez-vous nous donner quelques détails ? (ex : refaire le salon, ravalement de façade, fresque dans l'entrée...)", { newPhase:"devis_2" });
+    } else if (action === "simulateur") {
+      setMsgs(p => [...p, { from:"user", text:"Estimer le coût" }]);
+      botReply("Notre estimatif gratuit est disponible dans le premier onglet — il vous donne une fourchette personnalisée en 2 minutes !\n\nEt si vous préférez en parler directement, Axel peut vous rappeler : laissez votre nom et numéro ci-dessous, ou appelez-le au 06 16 70 57 57 !", { cta:true, newPhase:"chat" });
+    } else if (action === "rappel") {
+      setPendingCTA(true);
+    }
+  };
+
+  const sendMsg = () => {
+    const txt = input.trim();
+    if (!txt) return;
+    setMsgs(p => [...p, { from:"user", text:txt }]);
+    setInput("");
+    const t = txt.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+
+    if (phase === "devis_1") {
+      setDevisData(d => ({...d, type:txt}));
+      botReply("Super ! Pouvez-vous nous décrire votre projet en quelques mots ?", { newPhase:"devis_2" });
+      return;
+    }
+    if (phase === "devis_2") {
+      setDevisData(d => ({...d, desc:txt}));
+      botReply("Très bien, on y est presque ! Dans quelle ville se situe le chantier ?", { newPhase:"devis_3" });
+      return;
+    }
+    if (phase === "devis_3") {
+      setDevisData(d => ({...d, ville:txt}));
+      botReply(
+        "Parfait, merci pour ces informations ! Pour avoir une idée du budget, notre estimatif gratuit est disponible dans le premier onglet — rapide et sans engagement !\n\nEt si vous préférez en discuter de vive voix, Axel est là. Laissez-nous vos coordonnées ou appelez le 06 16 70 57 57 !",
+        { cta:true, btns:[{ label:"Me faire rappeler", action:"rappel" }], newPhase:"chat" }
+      );
+      return;
+    }
+
+    if (HAS(t,"couleur","blanc","teinte","nuance","palette","peindre","ton","nuanci")) {
+      botReply("Nos palettes provençales s'adaptent à chaque pièce : Blancs de Provence pour lumineux, Ocres & Terres du Sud pour chaleureux, Bleus & Lavande pour apaisant, Nuits Profondes pour sophistiqué. Consultez notre nuancier juste au-dessus !", { btns:[{label:"Conseils par pièce", action:"pieces"},{label:"Tendances 2025", action:"tendance"}] });
+    } else if (HAS(t,"salon","sejour","cuisine","chambre","salle de bain","bureau","entree","couloir")) {
+      botReply("Pour un salon : Ocres du Sud ou Nuits Profondes, Blancs de Provence pour agrandir.\nPour une chambre : Bleus & Lavande ou Wabi-Sabi.\nPour la cuisine : Ocres ou Verts Garrigue.\nPour la salle de bain : Bleus ou tons pierre.");
+    } else if (HAS(t,"tendance","2025","mode","luxe","contemporain")) {
+      botReply("En 2025, les tons Wabi-Sabi et Velvet & Couture sont très demandés — naturels, chaleureux et intemporels. Le Mocha Mousse (Pantone 2025) et les terres profondes dominent les intérieurs haut de gamme. Consultez nos palettes Tendance 2025 !");
+    } else if (HAS(t,"prix","budget","cout","tarif","combien","cher","estimation","simulateur")) {
+      botReply(
+        "Pour avoir une idée du budget, notre estimatif gratuit est dans le premier onglet — il vous donne une fourchette personnalisée en 2 minutes, sans engagement !\n\nEt si vous souhaitez qu'Axel vous rappelle, laissez-nous vos coordonnées ou appelez le 06 16 70 57 57 !",
+        { cta:true }
+      );
+    } else if (HAS(t,"electr","macon","charpent","isolat","toiture","menuiser","terrassement")) {
+      botReply("Pas de souci ! Nous faisons partie d'un groupe d'artisans qui coordonnent tout pour vous — de la peinture au gros œuvre.\n\nSouhaitez-vous qu'on vous rappelle pour en discuter ?", { cta:true });
+    } else if (HAS(t,"fresque","murale","trompe","artistique","stucco","tadelakt","beton cire")) {
+      botReply("Les travaux artistiques, c'est vraiment le cœur de métier d'Axel ! Fresques murales, trompe l'œil, stucco, béton ciré... chaque réalisation est unique.\n\nVous souhaitez un devis pour ce type de projet ?", { btns:[{ label:"Demander un devis", action:"devis" }] });
+    } else if (HAS(t,"devis","projet","travaux","renover","renovation","peindre","peinture","placo","carrelage","parquet")) {
+      botReply("Avec plaisir ! Commençons par le type de travaux qui vous intéresse :", { btns:TYPE_BTNS, newPhase:"devis_1" });
+    } else if (HAS(t,"interesse","appel","rappel","contact","rdv","rendez","coordonnee","joindre")) {
+      botReply("Avec plaisir ! Axel aime prendre le temps de bien comprendre chaque projet. Appelez-le directement au 06 16 70 57 57, ou laissez vos coordonnées ci-dessous et il vous rappelle sous 48h !", { cta:true });
+    } else if (HAS(t,"disponible","disponibilite","delai","quand","urgent")) {
+      botReply("Les plannings se remplissent vite ! Pour connaître nos disponibilités exactes, le plus simple est d'appeler Axel au 06 16 70 57 57. Vous pouvez aussi laisser vos coordonnées et il vous rappelle sous 48h !", { cta:true });
+    } else if (HAS(t,"peynier","aix","gardanne","meyreuil","fuveau","trets","aubagne","marseille","zone","secteur","pays d")) {
+      botReply("Nous intervenons principalement sur le Pays d'Aix-en-Provence, Marseille, Gardanne, Trets, Aubagne et le secteur de l'étang de Berre. N'hésitez pas à nous demander si votre commune est couverte !");
+    } else if (HAS(t,"bonjour","bonsoir","salut","hello","coucou")) {
+      botReply("Bonjour, bienvenue chez Peinture & Rénovation ! Ravi de vous accueillir. Qu'est-ce qui nous vaut le plaisir de votre visite ?", { btns:[{ label:"Conseils couleur", action:"couleur" }, { label:"Demander un devis", action:"devis" }] });
+    } else if (HAS(t,"merci","super","parfait","excellent","nickel","top")) {
+      botReply("Merci à vous, c'est un plaisir ! N'hésitez pas à revenir si vous avez d'autres questions — nous sommes disponibles du lundi au samedi. À bientôt !");
+    } else {
+      botReply("Hmm, je ne suis pas sûr de bien vous suivre sur ce point ! Pour toute question, vous pouvez appeler Axel au 06 16 70 57 57 — ou utiliser le formulaire ci-dessous. Il sera heureux de vous répondre !", {
+        btns:[{ label:"Demander un devis", action:"devis" }, { label:"Nous appeler", action:"appeler" }]
+      });
+    }
+  };
+
+  const sendContact = async () => {
+    if (!contact.name.trim() || (!contact.phone.trim() && !contact.email.trim())) return;
+    const summary = devisData.type
+      ? `Projet : ${devisData.type}${devisData.desc ? ` — ${devisData.desc}` : ""}${devisData.ville ? ` (${devisData.ville})` : ""}\n\n`
+      : "";
+    const conv = msgs.map(m=>`${m.from==="user"?"Client":"Assistant"}: ${m.text}`).join("\n");
+    try {
+      await emailjs.send(EJSID, EJSTPL, {
+        nom: contact.name,
+        telephone: contact.phone || "—",
+        email_client: contact.email || "—",
+        conversation: summary + conv,
+      }, EJSKEY);
+    } catch(e) { console.error(e); }
+    setContactSent(true); setShowCForm(false); setPendingCTA(false);
+    setMsgs(p => [...p, { from:"bot", text:`Merci ${contact.name.split(" ")[0]} ! Vos coordonnées ont bien été reçues, Axel vous rappellera très rapidement.` }]);
+  };
 
   return (
-    <div style={{fontFamily:"'Jost',sans-serif",background:G.bg,minHeight:"100vh",color:G.black}}>
+    <>
+      {open && (
+        <div className="chat-win">
+          <div className="chat-head">
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <div style={{width:36,height:36,borderRadius:"50%",background:"#C8973A",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" fill="white"/></svg>
+              </div>
+              <div>
+                <div style={{fontSize:12,fontWeight:500,color:"#fff",letterSpacing:".04em"}}>Assistant Peinture &amp; Rénovation</div>
+                <div style={{display:"flex",alignItems:"center",gap:5,marginTop:2}}>
+                  <div style={{width:6,height:6,borderRadius:"50%",background:"#4CAF50"}}/>
+                  <span style={{fontSize:10,color:"rgba(255,255,255,.5)"}}>En ligne</span>
+                </div>
+              </div>
+            </div>
+            <button onClick={()=>setOpen(false)} style={{background:"none",border:"none",color:"rgba(255,255,255,.4)",fontSize:18,cursor:"pointer",padding:"2px 6px",lineHeight:1}}>✕</button>
+          </div>
+          <div className="chat-body">
+            {msgs.map((m,i) => (
+              <div key={i} className={m.from==="bot"?"chat-msg-bot":"chat-msg-user"}>{renderText(m.text)}</div>
+            ))}
+            {typing && (
+              <div className="chat-msg-bot" style={{display:"flex",gap:5,alignItems:"center",padding:"12px 14px"}}>
+                {[0,.25,.5].map(d=><span key={d} style={{width:7,height:7,borderRadius:"50%",background:"#C8973A",display:"inline-block",animation:`pulse 1.1s ${d}s infinite`}}/>)}
+              </div>
+            )}
+            {quickBtns && !typing && (
+              <div className="chat-quick-btns">
+                {quickBtns.map(b => (
+                  <button key={b.action} className="chat-quick-btn" onClick={()=>handleQuickBtn(b.action)}>{b.label}</button>
+                ))}
+              </div>
+            )}
+            {pendingCTA && !showCForm && !contactSent && (
+              <button className="chat-coords-btn" onClick={()=>{setShowCForm(true);setPendingCTA(false);}}>Laisser mes coordonnées →</button>
+            )}
+            {showCForm && (
+              <div className="chat-cform">
+                <div style={{fontSize:11,color:"#555",fontWeight:500,marginBottom:2}}>Vos coordonnées pour être rappelé(e) :</div>
+                <input placeholder="Prénom et nom *" value={contact.name} onChange={e=>setContact({...contact,name:e.target.value})}/>
+                <input placeholder="Téléphone (06…) *" value={contact.phone} onChange={e=>setContact({...contact,phone:e.target.value})}/>
+                <input placeholder="Email (optionnel)" value={contact.email} onChange={e=>setContact({...contact,email:e.target.value})}/>
+                <button className="chat-cform-btn" onClick={sendContact}>Envoyer →</button>
+              </div>
+            )}
+            <div ref={endRef}/>
+          </div>
+          <div className="chat-foot">
+            <input className="chat-inp" value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendMsg()} placeholder="Votre question…" maxLength={300}/>
+            <button className="chat-send" onClick={sendMsg} disabled={!input.trim()}>→</button>
+          </div>
+        </div>
+      )}
+      <button className="chat-btn" onClick={()=>setOpen(o=>!o)} aria-label="Chat">
+        {open
+          ? <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 4l12 12M16 4L4 16" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+          : <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" fill="white"/></svg>
+        }
+      </button>
+    </>
+  );
+}
+
+/* ═══ APP ═════════════════════════════════════════════════════ */
+export default function App() {
+  const [tab, setTab]         = useState("calcul");
+  const [openPal, setOpenPal] = useState(null);
+  const [selColor, setSelColor] = useState(null);
+  const [openProd, setOpenProd] = useState(null);
+  const [visu, setVisu]       = useState({mur:"#E8E2D6",plafond:"#F5F2EC",sol:"#C4A882",accent:null});
+  const [sel, setSel]         = useState({couleurs:[],produit:null});
+  const [modal, setModal]     = useState(false);
+  const [nom, setNom]         = useState("");
+  const [tel, setTel]         = useState("");
+  const [piece, setPiece]     = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent]       = useState(false);
+
+  const toggleC = c => setSel(s=>({...s,couleurs:s.couleurs.find(x=>x.ref===c.ref)?s.couleurs.filter(x=>x.ref!==c.ref):[...s.couleurs,c]}));
+  const inSel   = c => sel.couleurs.some(x=>x.ref===c.ref);
+  const count   = sel.couleurs.length + (sel.produit?1:0);
+  const allC    = PALETTES.flatMap(p=>p.couleurs);
+
+  const harm = selColor ? (()=>{
+    const [h,s,l]=h2h(selColor.hex);
+    return {
+      mono:  [h2hex(h,s,Math.min(l+22,93)), selColor.hex, h2hex(h,s,Math.max(l-18,8))],
+      analog:[h2hex((h-30+360)%360,s,l), selColor.hex, h2hex((h+30)%360,s,l)],
+      compl: [selColor.hex, h2hex((h+180)%360,s,l)],
+      triad: [selColor.hex, h2hex((h+120)%360,s,l), h2hex((h+240)%360,s,l)],
+    };
+  })() : null;
+
+  const T = {
+    tag:   {fontFamily:"Inter,sans-serif",fontSize:10,fontWeight:500,letterSpacing:"2.5px",textTransform:"uppercase",color:G.gold},
+    h1:    {fontFamily:"'Cormorant Garamond',serif",fontWeight:300,letterSpacing:"-0.5px",color:G.text,lineHeight:1.1},
+    p:     {fontFamily:"Inter,sans-serif",fontSize:13,fontWeight:300,color:G.muted,lineHeight:1.75,letterSpacing:"0.2px"},
+    label: {fontFamily:"Inter,sans-serif",fontSize:9,fontWeight:600,letterSpacing:"2px",textTransform:"uppercase",color:G.text},
+    btn:   {fontFamily:"Inter,sans-serif",fontSize:10,fontWeight:500,letterSpacing:"1.5px",textTransform:"uppercase"},
+  };
+  const divider = <div style={{width:32,height:1,background:G.gold,margin:"18px auto"}}/>;
+  const preps  = PRODUITS.filter(p=>p.categorie==="preparation");
+  const peints = PRODUITS.filter(p=>p.categorie==="peinture");
+
+  const sendDevis = async () => {
+    if(!nom.trim()) return;
+    setSending(true);
+    const couleursText = sel.couleurs.length>0
+      ? sel.couleurs.map(c=>`${c.nom} — ${c.ref} — ${c.hex}`).join("\n")
+      : "Aucune couleur sélectionnée";
+    const produitText = sel.produit
+      ? `${sel.produit.nom} (${sel.produit.marque})`
+      : "Aucun produit sélectionné";
+    try {
+      await emailjs.send(EJSID, EJSTPL, {
+        nom,
+        telephone: tel || "—",
+        email_client: "—",
+        conversation: `[Nuancier] Demande de devis\n\nPrénom : ${nom}\nTél : ${tel||"—"}\nPièce : ${piece||"—"}\n\nCouleurs :\n${couleursText}\n\nFinition : ${produitText}`,
+      }, EJSKEY);
+    } catch(e) { console.error(e); }
+    setSending(false);
+    setSent(true);
+  };
+
+  const TABS = [
+    {id:"calcul",     l:<><span style={{color:G.gold,fontWeight:600}}>€</span>&nbsp;Chiffrer mon projet</>},
+    {id:"palettes",   l:"Palettes"},
+    {id:"harmonies",  l:"Harmonies"},
+    {id:"simulateur", l:"Simulateur"},
+    {id:"produits",   l:"Produits"},
+  ];
+
+  return (
+    <div style={{fontFamily:"Inter,sans-serif",background:G.bg,minHeight:"100vh",color:G.text}}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-        .fade{animation:fadeUp .28s ease both}
-        .sw{transition:transform .12s,box-shadow .12s;cursor:pointer;}
-        .sw:hover{transform:scale(1.12);box-shadow:0 4px 14px #00000022}
-        .card{transition:background .15s;}
-        .card:hover{background:${G.white}!important;}
-        button,input,select{cursor:pointer;font-family:'Jost',sans-serif;}
-        input{outline:none;}
-        input:focus{border-color:${G.gold}!important;}
+        html{scroll-behavior:smooth;}
+        body{background:#FAFAF8;}
+        input,select,button{font-family:Inter,sans-serif;}
+        input{outline:none;} input:focus{border-color:${G.gold}!important;}
+        select option{background:#fff;color:#1A1A1A;}
         a{text-decoration:none;}
-        ::-webkit-scrollbar{width:3px;}
-        ::-webkit-scrollbar-thumb{background:${G.gold};border-radius:2px;}
+        ::-webkit-scrollbar{width:3px;} ::-webkit-scrollbar-thumb{background:${G.gold};border-radius:2px;}
+        @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(76,175,80,.5)}50%{box-shadow:0 0 0 5px rgba(76,175,80,0)}}
+        .sw{transition:transform .12s,box-shadow .12s,outline .12s;cursor:pointer;}
+        .sw:hover{transform:scale(1.13);box-shadow:0 4px 14px rgba(200,151,58,.3)}
+        .chat-btn{position:fixed;bottom:28px;right:28px;z-index:1000;width:56px;height:56px;border-radius:50%;background:#C8973A;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(200,151,58,.45);transition:.25s;}
+        .chat-btn:hover{transform:scale(1.08);box-shadow:0 6px 28px rgba(200,151,58,.65);}
+        .chat-win{position:fixed;bottom:96px;right:28px;z-index:1000;width:340px;background:#fff;border:1px solid #DEDEDE;box-shadow:0 8px 40px rgba(0,0,0,.18);display:flex;flex-direction:column;font-family:Inter,sans-serif;border-radius:2px;overflow:hidden;}
+        .chat-head{background:#0A0A0A;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+        .chat-body{overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px;min-height:160px;max-height:320px;}
+        .chat-msg-bot{background:#F5F5F5;color:#1A1A1A;padding:10px 13px;font-size:13px;line-height:1.55;max-width:85%;border-radius:0 8px 8px 8px;word-break:break-word;}
+        .chat-msg-user{background:#C8973A;color:#fff;padding:10px 13px;font-size:13px;line-height:1.55;max-width:85%;border-radius:8px 0 8px 8px;align-self:flex-end;word-break:break-word;}
+        .chat-foot{padding:10px 12px;border-top:1px solid #DEDEDE;display:flex;gap:8px;flex-shrink:0;}
+        .chat-inp{flex:1;border:1px solid #DEDEDE;padding:9px 12px;font-family:Inter;font-size:13px;color:#1A1A1A;outline:none;border-radius:2px;}
+        .chat-inp:focus{border-color:#C8973A;}
+        .chat-send{background:#C8973A;color:#fff;border:none;padding:9px 14px;cursor:pointer;font-family:Inter;font-size:14px;border-radius:2px;transition:.2s;flex-shrink:0;}
+        .chat-send:hover{background:#b08432;}
+        .chat-send:disabled{opacity:.4;cursor:not-allowed;}
+        .chat-cform{background:#F9F6EF;border:1px solid rgba(200,151,58,.3);padding:12px;display:flex;flex-direction:column;gap:7px;}
+        .chat-cform input{border:1px solid #DEDEDE;padding:8px 10px;font-family:Inter;font-size:12px;outline:none;border-radius:2px;width:100%;}
+        .chat-cform input:focus{border-color:#C8973A;}
+        .chat-cform-btn{background:#0A0A0A;color:#fff;border:none;padding:9px;font-family:Inter;font-size:10px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;transition:.2s;}
+        .chat-cform-btn:hover{background:#C8973A;}
+        .chat-quick-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}
+        .chat-quick-btn{background:none;border:1px solid rgba(200,151,58,.5);color:#C8973A;padding:6px 11px;font-size:11px;font-family:Inter;cursor:pointer;border-radius:2px;letter-spacing:.04em;transition:.2s;text-align:left;}
+        .chat-quick-btn:hover{background:#C8973A;color:#fff;border-color:#C8973A;}
+        .chat-coords-btn{background:none;border:1px solid rgba(200,151,58,.5);color:#C8973A;padding:8px 14px;font-size:11px;font-family:Inter;cursor:pointer;border-radius:2px;letter-spacing:.04em;transition:.2s;align-self:flex-start;}
+        .chat-coords-btn:hover{background:#C8973A;color:#fff;}
+        @media(max-width:768px){
+          .header-inner{flex-wrap:wrap;gap:10px;}
+          .calcul-grid{grid-template-columns:1fr!important;}
+          .res-grid{grid-template-columns:1fr 1fr!important;}
+          .budget-grid{grid-template-columns:1fr!important;}
+          .sim-grid{grid-template-columns:1fr!important;}
+          .footer-grid{grid-template-columns:1fr!important;text-align:center;}
+          .palette-grid{grid-template-columns:1fr!important;}
+          .prod-grid{grid-template-columns:1fr!important;}
+          .harm-grid{grid-template-columns:1fr 1fr!important;}
+          .harm-inner{grid-template-columns:1fr!important;}
+          .chat-win{width:calc(100vw - 32px);right:16px;}
+        }
+        @media(max-width:480px){
+          .tabs-nav{padding:0 12px!important;}
+          .tabs-nav button{padding:10px 12px!important;font-size:9px!important;}
+          .main-pad{padding:28px 14px 80px!important;}
+          .res-grid{grid-template-columns:1fr 1fr!important;}
+        }
       `}</style>
 
       {/* ══ CONTACT BAR ══ */}
-      <Contact/>
+      <div style={{background:G.gold,padding:"9px 20px",display:"flex",alignItems:"center",justifyContent:"center",gap:24,flexWrap:"wrap"}}>
+        {[{icon:"📞",label:"06 16 70 57 57",href:"tel:+33616705757"},{icon:"✉️",label:"peintureetrenovation13@gmail.com",href:"mailto:peintureetrenovation13@gmail.com"},{icon:"📍",label:"Pays d'Aix-en-Provence",href:null}].map((c,i)=>(
+          <div key={i} style={{display:"flex",alignItems:"center",gap:6}}>
+            <span style={{fontSize:12}}>{c.icon}</span>
+            {c.href
+              ? <a href={c.href} style={{fontFamily:"Inter,sans-serif",fontSize:11,fontWeight:500,color:"#fff",letterSpacing:"0.5px"}}>{c.label}</a>
+              : <span style={{fontFamily:"Inter,sans-serif",fontSize:11,color:"#fff",letterSpacing:"0.5px"}}>{c.label}</span>}
+          </div>
+        ))}
+      </div>
 
       {/* ══ HEADER ══ */}
-      <header style={{background:G.white,borderBottom:`1px solid ${G.border}`,position:"sticky",top:0,zIndex:100}}>
-        <div style={{maxWidth:1060,margin:"0 auto",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:16}}>
-          <div style={{display:"flex",alignItems:"center",gap:14}}>
-            <Logo size={52}/>
-            {<div>
-              <div style={{...T.tag,fontSize:9,marginBottom:3}}>Peinture et Rénovation Pays d'Aix</div>
+      <header style={{background:G.ink,borderBottom:`1px solid ${G.goldBorder}`,position:"sticky",top:0,zIndex:100}}>
+        <div className="header-inner" style={{maxWidth:1060,margin:"0 auto",padding:"12px 20px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:14}}>
+          <div style={{display:"flex",alignItems:"center",gap:12}}>
+            <Logo size={48}/>
+            <div>
+              <div style={{...T.tag,fontSize:8,marginBottom:3,color:G.gold}}>Peinture et Rénovation · Pays d'Aix</div>
               <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:10,fontWeight:300,fontStyle:"italic",color:G.muted}}>Axel Sandahl · Artisan d'Art</div>
-            </div>}
+            </div>
           </div>
-          <button onClick={()=>setModal(true)} style={{...T.btn,background:"transparent",border:`1px solid ${G.gold}`,color:G.gold,padding:"8px 18px",display:"flex",alignItems:"center",gap:8}}>
-            Ma sélection {count>0&&<span style={{background:G.gold,color:G.white,borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700}}>{count}</span>}
-          </button>
+          <a href={MAIN_URL} target="_blank" rel="noreferrer"
+            style={{...T.tag,fontSize:9,color:G.muted,display:"flex",alignItems:"center",gap:6,transition:"color .2s"}}
+            onMouseEnter={e=>e.currentTarget.style.color=G.gold}
+            onMouseLeave={e=>e.currentTarget.style.color=G.muted}>
+            ← Site principal
+          </a>
+          <motion.button whileHover={{borderColor:G.gold,color:G.white}} whileTap={{scale:0.96}} onClick={()=>setModal(true)}
+            style={{...T.btn,background:"transparent",border:`1px solid ${G.goldBorder}`,color:G.gold,padding:"8px 16px",cursor:"pointer",display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+            Ma sélection
+            {count>0 && <span style={{background:G.gold,color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,flexShrink:0}}>{count}</span>}
+          </motion.button>
         </div>
-        <nav style={{maxWidth:1060,margin:"0 auto",padding:"0 20px",display:"flex",borderTop:`1px solid ${G.border}`,overflowX:"auto"}}>
-          {[{id:"calcul",l:"Estimatif"},{id:"palettes",l:"Palettes"},{id:"harmonies",l:"Harmonies"},{id:"produits",l:"Produits"},{id:"simulateur",l:"Simulateur"}].map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{...T.btn,background:"transparent",border:"none",borderBottom:tab===t.id?`2px solid ${G.gold}`:"2px solid transparent",color:tab===t.id?G.gold:G.muted,padding:"11px 18px",whiteSpace:"nowrap",transition:"all .18s"}}>
+
+        {/* TABS */}
+        <nav className="tabs-nav" style={{maxWidth:1060,margin:"0 auto",padding:"0 20px",display:"flex",borderTop:`1px solid ${G.border}`,overflowX:"auto",scrollbarWidth:"none"}}>
+          {TABS.map(t=>(
+            <motion.button key={t.id} onClick={()=>setTab(t.id)}
+              whileHover={{color:G.gold}} whileTap={{scale:0.96}}
+              style={{...T.btn,background:"transparent",border:"none",borderBottom:tab===t.id?`2px solid ${G.gold}`:"2px solid transparent",color:tab===t.id?G.gold:G.muted,padding:"11px 18px",whiteSpace:"nowrap",cursor:"pointer",transition:"color .18s,border-color .18s"}}>
               {t.l}
-            </button>
+            </motion.button>
           ))}
         </nav>
       </header>
 
-      <main style={{maxWidth:1060,margin:"0 auto",padding:"48px 20px 96px"}}>
+      {/* ══ MAIN ══ */}
+      <main className="main-pad" style={{maxWidth:1060,margin:"0 auto",padding:"48px 20px 96px"}}>
+        <AnimatePresence mode="wait">
+          <motion.div key={tab}
+            initial={{opacity:0,y:14}} animate={{opacity:1,y:0}} exit={{opacity:0,y:-8}}
+            transition={{duration:0.28,ease:[0.22,1,0.36,1]}}>
 
-        {/* ══ PALETTES ══ */}
-        {tab==="palettes" && (
-          <div className="fade">
-            <div style={{textAlign:"center",marginBottom:48}}>
-              <div style={T.tag}>Guide couleur · Nuancier Cromology Zolpan</div>
-              {divider}
-              <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Choisissez<br/><em>votre ambiance</em></h1>
-              {divider}
-              <p style={{...T.p,maxWidth:480,margin:"0 auto 16px"}}>Des palettes issues du nuancier Cromology Zolpan, pensées pour les intérieurs provençaux.</p>
-              <a href="https://www.zolpan.fr/colorimetrie/couleurs-interieures/nuancier-couleur-cromology" target="_blank" rel="noreferrer"
-                style={{...T.tag,fontSize:9,color:G.gold,borderBottom:`1px solid ${G.goldLt}`,paddingBottom:2}}>
-                Voir le nuancier Cromology complet →
-              </a>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:1,border:`1px solid ${G.border}`}}>
-              {PALETTES.map((pal,i)=>{
-                const open=openPal?.id===pal.id;
-                return(
-                  <div key={pal.id} className="card" onClick={()=>setOpenPal(open?null:pal)}
-                    style={{background:open?G.white:G.bg,borderRight:i%2===0?`1px solid ${G.border}`:"none",borderBottom:`1px solid ${G.border}`,cursor:"pointer"}}>
-                    <div style={{display:"flex",height:64}}>{pal.couleurs.map(c=><div key={c.hex} style={{flex:1,background:c.hex}}/>)}</div>
-                    <div style={{padding:"18px 22px"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7}}>
-                        <div>
-                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:400,color:G.black}}>{pal.nom}</div>
-                          <div style={{...T.tag,fontSize:9,marginTop:3}}>{pal.ambiance}</div>
-                        </div>
-                        <div style={{color:G.gold,fontSize:17,transition:"transform .22s",transform:open?"rotate(180deg)":"none"}}>▾</div>
-                      </div>
-                      <p style={{...T.p,fontSize:12,marginBottom:5}}>{pal.desc}</p>
-                      <div style={{...T.p,fontSize:11}}>📍 {pal.piece}</div>
-                      {open && (
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginTop:18,paddingTop:18,borderTop:`1px solid ${G.border}`}} onClick={e=>e.stopPropagation()}>
+            {/* ══ PALETTES ══ */}
+            {tab==="palettes" && (
+              <div>
+                <div style={{textAlign:"center",marginBottom:48}}>
+                  <div style={T.tag}>Guide couleur · Nuancier Cromology Zolpan</div>
+                  {divider}
+                  <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Choisissez<br/><em>votre ambiance</em></h1>
+                  {divider}
+                  <p style={{...T.p,maxWidth:480,margin:"0 auto 16px"}}>Des palettes issues du nuancier Cromology Zolpan, pensées pour les intérieurs provençaux.</p>
+                  <a href="https://www.zolpan.fr/colorimetrie/couleurs-interieures/nuancier-couleur-cromology" target="_blank" rel="noreferrer"
+                    style={{...T.tag,fontSize:9,color:G.gold,borderBottom:`1px solid ${G.goldBorder}`,paddingBottom:2}}>
+                    Voir le nuancier Cromology complet →
+                  </a>
+                </div>
+                <div className="palette-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:1,border:`1px solid ${G.goldBorder}`}}>
+                  {PALETTES.map((pal,i)=>{
+                    const open = openPal?.id===pal.id;
+                    return (
+                      <motion.div key={pal.id}
+                        whileHover={!open?{borderColor:"rgba(200,151,58,.45)"}:{}}
+                        onClick={()=>setOpenPal(open?null:pal)}
+                        style={{background:open?G.surfaceHi:G.surface,borderRight:i%2===0?`1px solid ${G.goldBorder}`:"none",borderBottom:`1px solid ${G.goldBorder}`,cursor:"pointer",transition:"background .2s,border-color .2s"}}>
+                        {/* Bande couleurs */}
+                        <div style={{display:"flex",height:64}}>
                           {pal.couleurs.map(c=>(
-                            <div key={c.ref} style={{textAlign:"center",cursor:"pointer"}}
-                              onClick={()=>{toggleC(c);setSelColor(c);setVisu(v=>({...v,mur:c.hex}));}}>
-                              <div className="sw" style={{width:54,height:54,margin:"0 auto 7px",background:c.hex,outline:inSel(c)?`2px solid ${G.gold}`:"2px solid transparent",outlineOffset:"3px"}}/>
-                              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:13,color:G.black,marginBottom:1}}>{c.nom}</div>
-                              <div style={{...T.p,fontSize:9,letterSpacing:"0.5px",color:G.gold}}>{c.ref}</div>
-                              {inSel(c)&&<div style={{...T.tag,fontSize:9,marginTop:3}}>✓ Sélectionné</div>}
+                            <motion.div key={c.hex} style={{flex:1,background:c.hex}}
+                              whileHover={{flex:1.5}} transition={{duration:0.2}}/>
+                          ))}
+                        </div>
+                        <div style={{padding:"18px 22px"}}>
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:7}}>
+                            <div>
+                              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:400,color:G.text}}>{pal.nom}</div>
+                              <div style={{...T.tag,fontSize:9,marginTop:3}}>{pal.ambiance}</div>
+                            </div>
+                            <motion.div animate={{rotate:open?180:0}} transition={{duration:.22}} style={{color:G.gold,fontSize:16}}>▾</motion.div>
+                          </div>
+                          <p style={{...T.p,fontSize:12,marginBottom:5}}>{pal.desc}</p>
+                          <div style={{...T.p,fontSize:11}}>📍 {pal.piece}</div>
+                          <AnimatePresence>
+                            {open && (
+                              <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} transition={{duration:0.28}}
+                                style={{overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+                                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginTop:18,paddingTop:18,borderTop:`1px solid ${G.goldBorder}`}}>
+                                  {pal.couleurs.map(c=>(
+                                    <motion.div key={c.ref} style={{textAlign:"center",cursor:"pointer"}}
+                                      whileHover={{scale:1.03}} whileTap={{scale:0.97}}
+                                      onClick={()=>{toggleC(c);setSelColor(c);setVisu(v=>({...v,mur:c.hex}));}}>
+                                      <motion.div className="sw"
+                                        style={{width:54,height:54,margin:"0 auto 7px",background:c.hex,outline:inSel(c)?`2px solid ${G.gold}`:"2px solid transparent",outlineOffset:3}}
+                                        whileHover={{boxShadow:`0 0 0 3px ${G.gold}55`}}/>
+                                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:13,color:G.text,marginBottom:1}}>{c.nom}</div>
+                                      <div style={{...T.p,fontSize:9,color:G.gold}}>{c.ref}</div>
+                                      {inSel(c) && <div style={{...T.tag,fontSize:9,marginTop:3}}>✓ Sélectionné</div>}
+                                    </motion.div>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ══ HARMONIES ══ */}
+            {tab==="harmonies" && (
+              <div>
+                <div style={{textAlign:"center",marginBottom:48}}>
+                  <div style={T.tag}>Théorie des couleurs</div>
+                  {divider}
+                  <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Harmonies<br/><em>de couleurs</em></h1>
+                  {divider}
+                  <p style={{...T.p,maxWidth:460,margin:"0 auto"}}>Sélectionnez une couleur de base pour découvrir les teintes qui s'accordent parfaitement.</p>
+                </div>
+                <div style={{background:G.surface,border:`1px solid ${G.goldBorder}`,padding:26,marginBottom:36}}>
+                  <div style={{...T.label,marginBottom:14}}>Couleur de départ</div>
+                  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                    {allC.map(c=>(
+                      <motion.div key={c.ref} className="sw"
+                        style={{width:34,height:34,background:c.hex,outline:selColor?.ref===c.ref?`2px solid ${G.gold}`:"2px solid transparent",outlineOffset:2}}
+                        whileHover={{scale:1.18,boxShadow:`0 4px 14px rgba(200,151,58,.3)`}}
+                        onClick={()=>setSelColor(c)} title={c.nom}/>
+                    ))}
+                  </div>
+                </div>
+                {selColor && harm ? (
+                  <div className="harm-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:1,border:`1px solid ${G.goldBorder}`}}>
+                    {[{k:"mono",l:"Monochrome",d:"Déclinaisons de la même teinte."},{k:"analog",l:"Analogues",d:"Teintes voisines, ambiance douce."},{k:"compl",l:"Complémentaires",d:"Opposées — fort contraste pour un accent."},{k:"triad",l:"Triadique",d:"Trois teintes équilibrées."}].map((h,i)=>(
+                      <motion.div key={h.k} whileHover={{background:G.surfaceHi}}
+                        style={{background:G.surface,borderRight:i%2===0?`1px solid ${G.goldBorder}`:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:22,transition:"background .2s"}}>
+                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:400,color:G.text,marginBottom:5}}>{h.l}</div>
+                        <p style={{...T.p,fontSize:11,marginBottom:16}}>{h.d}</p>
+                        <div style={{display:"flex",gap:8,marginBottom:14}}>
+                          {harm[h.k].map((hex,j)=>(
+                            <div key={j} style={{flex:1,textAlign:"center"}}>
+                              <motion.div className="sw" style={{height:46,margin:"0 auto 5px",background:hex}}
+                                whileHover={{scale:1.1}}
+                                onClick={()=>{setVisu(v=>({...v,mur:hex}));setTab("simulateur");}}/>
+                              <div style={{fontFamily:"monospace",fontSize:9,color:G.muted}}>{hex.toUpperCase()}</div>
                             </div>
                           ))}
                         </div>
-                      )}
-                    </div>
+                        <div style={{...T.tag,fontSize:9,cursor:"pointer",color:G.gold}}
+                          onClick={()=>{setVisu(v=>({...v,mur:harm[h.k][0],accent:harm[h.k].length>1?harm[h.k][1]:null}));setTab("simulateur");}}>
+                          Voir dans la pièce →
+                        </div>
+                      </motion.div>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ══ HARMONIES ══ */}
-        {tab==="harmonies" && (
-          <div className="fade">
-            <div style={{textAlign:"center",marginBottom:48}}>
-              <div style={T.tag}>Théorie des couleurs</div>
-              {divider}
-              <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Harmonies<br/><em>de couleurs</em></h1>
-              {divider}
-              <p style={{...T.p,maxWidth:460,margin:"0 auto"}}>Sélectionnez une couleur de base pour découvrir les teintes qui s'accordent parfaitement.</p>
-            </div>
-            <div style={{background:G.white,border:`1px solid ${G.border}`,padding:26,marginBottom:36}}>
-              <div style={{...T.label,marginBottom:14}}>Couleur de départ</div>
-              <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                {allC.map(c=>(
-                  <div key={c.ref} className="sw" style={{width:34,height:34,background:c.hex,outline:selColor?.ref===c.ref?`2px solid ${G.gold}`:"2px solid transparent",outlineOffset:"2px"}}
-                    onClick={()=>setSelColor(c)} title={c.nom}/>
-                ))}
+                ) : (
+                  <div style={{textAlign:"center",padding:"60px",fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:300,fontStyle:"italic",color:G.muted}}>
+                    Sélectionnez une couleur ci-dessus
+                  </div>
+                )}
               </div>
-            </div>
-            {selColor&&harm ? (
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:1,border:`1px solid ${G.border}`}}>
-                {[{k:"mono",l:"Monochrome",d:"Déclinaisons de la même teinte."},{k:"analog",l:"Analogues",d:"Teintes voisines, ambiance douce."},{k:"compl",l:"Complémentaires",d:"Opposées — fort contraste pour un accent."},{k:"triad",l:"Triadique",d:"Trois teintes équilibrées."}].map((h,i)=>(
-                  <div key={h.k} style={{background:G.white,borderRight:i%2===0?`1px solid ${G.border}`:"none",borderBottom:`1px solid ${G.border}`,padding:22}}>
-                    <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:400,marginBottom:5}}>{h.l}</div>
-                    <p style={{...T.p,fontSize:11,marginBottom:16}}>{h.d}</p>
-                    <div style={{display:"flex",gap:8,marginBottom:14}}>
-                      {harm[h.k].map((hex,j)=>(
-                        <div key={j} style={{flex:1,textAlign:"center"}}>
-                          <div className="sw" style={{height:46,margin:"0 auto 5px",background:hex}}
-                            onClick={()=>{setVisu(v=>({...v,mur:hex}));setTab("simulateur");}}/>
-                          <div style={{fontFamily:"monospace",fontSize:9,color:G.muted}}>{hex.toUpperCase()}</div>
+            )}
+
+            {/* ══ SIMULATEUR ══ */}
+            {tab==="simulateur" && (
+              <div>
+                <div style={{textAlign:"center",marginBottom:40}}>
+                  <div style={T.tag}>Visualisation</div>
+                  {divider}
+                  <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Simulateur<br/><em>de pièce</em></h1>
+                  {divider}
+                  <p style={{...T.p,maxWidth:460,margin:"0 auto"}}>Testez vos couleurs en temps réel. Cliquez sur une teinte pour l'appliquer sur les surfaces.</p>
+                </div>
+                <div className="sim-grid" style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:1,alignItems:"start",border:`1px solid ${G.goldBorder}`}}>
+                  <div style={{background:G.surface,borderRight:`1px solid ${G.goldBorder}`}}>
+                    <Room {...visu}/>
+                    <div style={{display:"flex",flexWrap:"wrap",gap:14,padding:"14px 20px",borderTop:`1px solid ${G.goldBorder}`,background:G.surfaceHi}}>
+                      {[{k:"mur",l:"Murs (fond + gauche)"},{k:"plafond",l:"Plafond"},{k:"sol",l:"Sol"},{k:"accent",l:"Mur droit (accent)"}].map(({k,l})=>(
+                        <div key={k} style={{display:"flex",alignItems:"center",gap:7}}>
+                          <div style={{width:16,height:16,background:visu[k]||"#333",border:`1px solid ${G.goldBorder}`,flexShrink:0}}/>
+                          <span style={{...T.p,fontSize:10}}>{l}</span>
                         </div>
                       ))}
                     </div>
-                    <div style={{...T.tag,fontSize:9,cursor:"pointer"}}
-                      onClick={()=>{setVisu(v=>({...v,mur:harm[h.k][0],accent:harm[h.k].length>1?harm[h.k][1]:null}));setTab("simulateur");}}>
-                      Voir dans la pièce →
-                    </div>
                   </div>
-                ))}
-              </div>
-            ):(
-              <div style={{textAlign:"center",padding:"60px",fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:300,fontStyle:"italic",color:G.muted}}>Sélectionnez une couleur ci-dessus</div>
-            )}
-          </div>
-        )}
-
-        {/* ══ PRODUITS ══ */}
-        {tab==="produits" && (
-          <div className="fade">
-            <div style={{textAlign:"center",marginBottom:48}}>
-              <div style={T.tag}>Gamme professionnelle</div>
-              {divider}
-              <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Nos produits<br/><em>& savoir-faire</em></h1>
-              {divider}
-              <p style={{...T.p,maxWidth:520,margin:"0 auto"}}>Les préparations d'abord — c'est la base de tout chantier réussi. Puis les finitions qui subliment le résultat.</p>
-            </div>
-
-            {/* PRÉPARATIONS */}
-            <div style={{...T.tag,fontSize:9,marginBottom:12}}>── Préparations du support</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:1,border:`1px solid ${G.border}`,marginBottom:32}}>
-              {preps.map((p,i)=>{
-                const open=openProd===p.id;
-                return(
-                  <div key={p.id} className="card" onClick={()=>setOpenProd(open?null:p.id)}
-                    style={{background:open?G.white:G.bg,borderRight:i%2===0?`1px solid ${G.border}`:"none",borderBottom:`1px solid ${G.border}`,padding:22,cursor:"pointer",borderLeft:`3px solid ${p.couleur}`}}>
-                    <div style={{...T.tag,fontSize:8,color:p.couleur,marginBottom:8}}>{p.tag}</div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                      <div>
-                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:400,color:G.black}}>{p.icon} {p.nom}</div>
-                        <div style={{...T.p,fontSize:11,marginTop:2}}>{p.marque}</div>
-                      </div>
-                      <div style={{...T.tag,fontSize:9,color:G.muted}}>{open?"▴":"▾"}</div>
-                    </div>
-                    <div style={{...T.p,fontSize:11,marginBottom:10}}>📍 {p.pour}</div>
-                    <div style={{borderLeft:`2px solid ${p.couleur}`,paddingLeft:10,fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontStyle:"italic",color:G.gray,lineHeight:1.6}}>{p.conseil}</div>
-                    {open && (
-                      <div style={{marginTop:18,paddingTop:18,borderTop:`1px solid ${G.border}`}} onClick={e=>e.stopPropagation()}>
-                        <div style={{...T.label,marginBottom:10}}>Points forts</div>
-                        {p.points.map((a,j)=>(
-                          <div key={j} style={{display:"flex",gap:7,marginBottom:5,alignItems:"flex-start"}}>
-                            <span style={{color:G.gold,fontSize:9,marginTop:3,flexShrink:0}}>✦</span>
-                            <span style={{...T.p,fontSize:11}}>{a}</span>
-                          </div>
-                        ))}
-                        {p.process && (
-                          <div style={{marginTop:14,padding:"10px 14px",background:G.light,borderLeft:`2px solid ${p.couleur}`}}>
-                            <div style={{...T.label,fontSize:8,marginBottom:5}}>Process</div>
-                            <div style={{...T.p,fontSize:11,fontStyle:"italic"}}>{p.process}</div>
-                          </div>
-                        )}
-                        <a href={p.lien} target="_blank" rel="noreferrer"
-                          style={{display:"inline-block",marginTop:14,...T.tag,fontSize:8,color:p.couleur,borderBottom:`1px solid ${p.couleur}44`,paddingBottom:1}}>
-                          Voir la fiche technique →
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* PEINTURES */}
-            <div style={{...T.tag,fontSize:9,marginBottom:12}}>── Peintures & finitions</div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:1,border:`1px solid ${G.border}`}}>
-              {peints.map((p,i)=>{
-                const open=openProd===p.id;
-                return(
-                  <div key={p.id} className="card" onClick={()=>setOpenProd(open?null:p.id)}
-                    style={{background:open?G.white:G.bg,borderRight:i%2===0?`1px solid ${G.border}`:"none",borderBottom:`1px solid ${G.border}`,padding:22,cursor:"pointer",borderLeft:`3px solid ${p.couleur}`}}>
-                    <div style={{...T.tag,fontSize:8,color:p.couleur,marginBottom:8}}>{p.tag}</div>
-                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                      <div>
-                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:400,color:G.black}}>{p.icon} {p.nom}</div>
-                        <div style={{...T.p,fontSize:11,marginTop:2}}>{p.marque}</div>
-                      </div>
-                      <div style={{...T.tag,fontSize:9,color:G.muted}}>{open?"▴":"▾"}</div>
-                    </div>
-                    <div style={{...T.p,fontSize:11,marginBottom:10}}>📍 {p.pour}</div>
-                    <div style={{borderLeft:`2px solid ${p.couleur}`,paddingLeft:10,fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontStyle:"italic",color:G.gray,lineHeight:1.6}}>{p.conseil}</div>
-                    {open && (
-                      <div style={{marginTop:18,paddingTop:18,borderTop:`1px solid ${G.border}`}} onClick={e=>e.stopPropagation()}>
-                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}}>
-                          <div>
-                            <div style={{...T.label,marginBottom:8}}>Points forts</div>
-                            {p.points.map((a,j)=>(
-                              <div key={j} style={{display:"flex",gap:7,marginBottom:5,alignItems:"flex-start"}}>
-                                <span style={{color:G.gold,fontSize:9,marginTop:3,flexShrink:0}}>✦</span>
-                                <span style={{...T.p,fontSize:11}}>{a}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div>
-                            <div style={{...T.label,marginBottom:8}}>À savoir</div>
-                            {p.limites.map((a,j)=>(
-                              <div key={j} style={{display:"flex",gap:7,marginBottom:5,alignItems:"flex-start"}}>
-                                <span style={{color:G.muted,fontSize:10,marginTop:2,flexShrink:0}}>—</span>
-                                <span style={{...T.p,fontSize:11}}>{a}</span>
-                              </div>
-                            ))}
-                            {p.process && (
-                              <div style={{marginTop:10,padding:"8px 12px",background:G.light,borderLeft:`2px solid ${p.couleur}`}}>
-                                <div style={{...T.label,fontSize:8,marginBottom:4}}>Process</div>
-                                <div style={{...T.p,fontSize:10,fontStyle:"italic"}}>{p.process}</div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div style={{display:"flex",gap:10,alignItems:"center",marginTop:4}}>
-                          <a href={p.lien} target="_blank" rel="noreferrer"
-                            style={{...T.tag,fontSize:8,color:p.couleur,borderBottom:`1px solid ${p.couleur}44`,paddingBottom:1}}>
-                            Fiche technique →
-                          </a>
-                          <button style={{...T.btn,flex:1,background:sel.produit?.id===p.id?p.couleur:"transparent",color:sel.produit?.id===p.id?G.white:p.couleur,border:`1px solid ${p.couleur}`,padding:"9px",transition:"all .2s"}}
-                            onClick={()=>setSel(s=>({...s,produit:s.produit?.id===p.id?null:p}))}>
-                            {sel.produit?.id===p.id?"✓ Sélectionné":"Ajouter à ma sélection"}
-                          </button>
+                  <div>
+                    {[{key:"mur",label:"Murs (fond + gauche)"},{key:"plafond",label:"Plafond"},{key:"sol",label:"Sol"},{key:"accent",label:"Mur droit (accent)"}].map(ctrl=>(
+                      <div key={ctrl.key} style={{padding:"14px 18px",borderBottom:`1px solid ${G.border}`,background:G.surface}}>
+                        <div style={{...T.label,marginBottom:10}}>{ctrl.label}</div>
+                        <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+                          {ctrl.key==="accent" && (
+                            <div className="sw" style={{width:24,height:24,background:"#222",display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:G.muted,border:`1px solid ${G.border}`}}
+                              onClick={()=>setVisu(v=>({...v,accent:null}))} title="Aucun">✕</div>
+                          )}
+                          {allC.map(c=>(
+                            <motion.div key={c.ref} className="sw"
+                              style={{width:24,height:24,background:c.hex,outline:visu[ctrl.key]===c.hex?`2px solid ${G.gold}`:"2px solid transparent",outlineOffset:2}}
+                              whileHover={{scale:1.2}} whileTap={{scale:0.9}}
+                              onClick={()=>setVisu(v=>({...v,[ctrl.key]:c.hex}))} title={c.nom}/>
+                          ))}
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                );
-              })}
-            </div>
-
-            {/* PHRASE FINALE */}
-            <div style={{textAlign:"center",padding:"28px 20px",borderTop:`1px solid ${G.border}`,marginTop:8}}>
-              <p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:300,fontStyle:"italic",color:G.gray,lineHeight:1.7}}>
-                Et encore bien d'autres produits à découvrir selon votre projet —<br/>
-                <span style={{color:G.gold}}>n'hésitez pas à nous en parler lors de la visite.</span>
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ══ SIMULATEUR ══ */}
-        {tab==="simulateur" && (
-          <div className="fade">
-            <div style={{textAlign:"center",marginBottom:40}}>
-              <div style={T.tag}>Visualisation</div>
-              {divider}
-              <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Simulateur<br/><em>de pièce</em></h1>
-              {divider}
-              <p style={{...T.p,maxWidth:460,margin:"0 auto"}}>Testez vos couleurs en temps réel. Cliquez sur une teinte pour l'appliquer sur les surfaces.</p>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"3fr 2fr",gap:1,alignItems:"start",border:`1px solid ${G.border}`}}>
-              <div style={{background:G.white,borderRight:`1px solid ${G.border}`}}>
-                <Room {...visu}/>
-                <div style={{display:"flex",flexWrap:"wrap",gap:16,padding:"14px 20px",borderTop:`1px solid ${G.border}`,background:G.light}}>
-                  {[{k:"mur",l:"Murs (fond + gauche)"},{k:"plafond",l:"Plafond"},{k:"sol",l:"Sol"},{k:"accent",l:"Mur droit (accent)"}].map(({k,l})=>(
-                    <div key={k} style={{display:"flex",alignItems:"center",gap:7}}>
-                      <div style={{width:16,height:16,background:visu[k]||"#eee",border:`1px solid ${G.border}`,flexShrink:0}}/>
-                      <span style={{...T.p,fontSize:10}}>{l}</span>
-                    </div>
-                  ))}
                 </div>
               </div>
+            )}
+
+            {/* ══ PRODUITS ══ */}
+            {tab==="produits" && (
               <div>
-                {[{key:"mur",label:"Murs (fond + gauche)"},{key:"plafond",label:"Plafond"},{key:"sol",label:"Sol"},{key:"accent",label:"Mur droit (accent)"}].map(ctrl=>(
-                  <div key={ctrl.key} style={{padding:"14px 18px",borderBottom:`1px solid ${G.border}`,background:G.bg}}>
-                    <div style={{...T.label,marginBottom:10}}>{ctrl.label}</div>
-                    <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
-                      {ctrl.key==="accent"&&<div className="sw" style={{width:24,height:24,background:G.light,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:G.muted}} onClick={()=>setVisu(v=>({...v,accent:null}))} title="Aucun">✕</div>}
-                      {allC.map(c=>(
-                        <div key={c.ref} className="sw" style={{width:24,height:24,background:c.hex,outline:visu[ctrl.key]===c.hex?`2px solid ${G.gold}`:"2px solid transparent",outlineOffset:"2px"}}
-                          onClick={()=>setVisu(v=>({...v,[ctrl.key]:c.hex}))} title={c.nom}/>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                <div style={{textAlign:"center",marginBottom:48}}>
+                  <div style={T.tag}>Gamme professionnelle</div>
+                  {divider}
+                  <h1 style={{...T.h1,fontSize:"clamp(32px,5vw,52px)"}}>Nos produits<br/><em>& savoir-faire</em></h1>
+                  {divider}
+                  <p style={{...T.p,maxWidth:520,margin:"0 auto"}}>Les préparations d'abord — c'est la base de tout chantier réussi. Puis les finitions qui subliment le résultat.</p>
+                </div>
+                <div style={{...T.tag,fontSize:9,marginBottom:12,color:G.muted}}>── Préparations du support</div>
+                <div className="prod-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:1,border:`1px solid ${G.goldBorder}`,marginBottom:32}}>
+                  {preps.map((p,i)=>{
+                    const open=openProd===p.id;
+                    return (
+                      <motion.div key={p.id} whileHover={!open?{background:G.surfaceHi}:{}} onClick={()=>setOpenProd(open?null:p.id)}
+                        style={{background:open?G.surfaceHi:G.surface,borderRight:i%2===0?`1px solid ${G.goldBorder}`:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:22,cursor:"pointer",borderLeft:`3px solid ${p.couleur}`,transition:"background .2s"}}>
+                        <div style={{...T.tag,fontSize:8,color:p.couleur,marginBottom:8}}>{p.tag}</div>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                          <div>
+                            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:400,color:G.text}}>{p.icon} {p.nom}</div>
+                            <div style={{...T.p,fontSize:11,marginTop:2}}>{p.marque}</div>
+                          </div>
+                          <motion.div animate={{rotate:open?180:0}} transition={{duration:.2}} style={{...T.tag,fontSize:9,color:G.muted}}>▾</motion.div>
+                        </div>
+                        <div style={{...T.p,fontSize:11,marginBottom:10}}>📍 {p.pour}</div>
+                        <div style={{borderLeft:`2px solid ${p.couleur}`,paddingLeft:10,fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontStyle:"italic",color:G.muted,lineHeight:1.6}}>{p.conseil}</div>
+                        <AnimatePresence>
+                          {open && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} transition={{duration:0.25}}
+                              style={{overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+                              <div style={{marginTop:18,paddingTop:18,borderTop:`1px solid ${G.border}`}}>
+                                <div style={{...T.label,marginBottom:10}}>Points forts</div>
+                                {p.points.map((a,j)=>(
+                                  <div key={j} style={{display:"flex",gap:7,marginBottom:5,alignItems:"flex-start"}}>
+                                    <span style={{color:G.gold,fontSize:9,marginTop:3,flexShrink:0}}>✦</span>
+                                    <span style={{...T.p,fontSize:11}}>{a}</span>
+                                  </div>
+                                ))}
+                                {p.process && (
+                                  <div style={{marginTop:14,padding:"10px 14px",background:G.bg,borderLeft:`2px solid ${p.couleur}`}}>
+                                    <div style={{...T.label,fontSize:8,marginBottom:5}}>Process</div>
+                                    <div style={{...T.p,fontSize:11,fontStyle:"italic"}}>{p.process}</div>
+                                  </div>
+                                )}
+                                <a href={p.lien} target="_blank" rel="noreferrer"
+                                  style={{display:"inline-block",marginTop:14,...T.tag,fontSize:8,color:p.couleur,borderBottom:`1px solid ${p.couleur}44`,paddingBottom:1}}>
+                                  Voir la fiche technique →
+                                </a>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                <div style={{...T.tag,fontSize:9,marginBottom:12,color:G.muted}}>── Peintures & finitions</div>
+                <div className="prod-grid" style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(310px,1fr))",gap:1,border:`1px solid ${G.goldBorder}`}}>
+                  {peints.map((p,i)=>{
+                    const open=openProd===p.id;
+                    return (
+                      <motion.div key={p.id} whileHover={!open?{background:G.surfaceHi}:{}} onClick={()=>setOpenProd(open?null:p.id)}
+                        style={{background:open?G.surfaceHi:G.surface,borderRight:i%2===0?`1px solid ${G.goldBorder}`:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:22,cursor:"pointer",borderLeft:`3px solid ${p.couleur}`,transition:"background .2s"}}>
+                        <div style={{...T.tag,fontSize:8,color:p.couleur,marginBottom:8}}>{p.tag}</div>
+                        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+                          <div>
+                            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:400,color:G.text}}>{p.icon} {p.nom}</div>
+                            <div style={{...T.p,fontSize:11,marginTop:2}}>{p.marque}</div>
+                          </div>
+                          <motion.div animate={{rotate:open?180:0}} transition={{duration:.2}} style={{...T.tag,fontSize:9,color:G.muted}}>▾</motion.div>
+                        </div>
+                        <div style={{...T.p,fontSize:11,marginBottom:10}}>📍 {p.pour}</div>
+                        <div style={{borderLeft:`2px solid ${p.couleur}`,paddingLeft:10,fontFamily:"'Cormorant Garamond',serif",fontSize:12,fontStyle:"italic",color:G.muted,lineHeight:1.6}}>{p.conseil}</div>
+                        <AnimatePresence>
+                          {open && (
+                            <motion.div initial={{opacity:0,height:0}} animate={{opacity:1,height:"auto"}} exit={{opacity:0,height:0}} transition={{duration:0.25}}
+                              style={{overflow:"hidden"}} onClick={e=>e.stopPropagation()}>
+                              <div style={{marginTop:18,paddingTop:18,borderTop:`1px solid ${G.border}`}}>
+                                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:14}} className="harm-inner">
+                                  <div>
+                                    <div style={{...T.label,marginBottom:8}}>Points forts</div>
+                                    {p.points.map((a,j)=>(
+                                      <div key={j} style={{display:"flex",gap:7,marginBottom:5,alignItems:"flex-start"}}>
+                                        <span style={{color:G.gold,fontSize:9,marginTop:3,flexShrink:0}}>✦</span>
+                                        <span style={{...T.p,fontSize:11}}>{a}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div>
+                                    <div style={{...T.label,marginBottom:8}}>À savoir</div>
+                                    {p.limites.map((a,j)=>(
+                                      <div key={j} style={{display:"flex",gap:7,marginBottom:5,alignItems:"flex-start"}}>
+                                        <span style={{color:G.muted,fontSize:10,marginTop:2,flexShrink:0}}>—</span>
+                                        <span style={{...T.p,fontSize:11}}>{a}</span>
+                                      </div>
+                                    ))}
+                                    {p.process && (
+                                      <div style={{marginTop:10,padding:"8px 12px",background:G.bg,borderLeft:`2px solid ${p.couleur}`}}>
+                                        <div style={{...T.label,fontSize:8,marginBottom:4}}>Process</div>
+                                        <div style={{...T.p,fontSize:10,fontStyle:"italic"}}>{p.process}</div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div style={{display:"flex",gap:10,alignItems:"center",marginTop:4}}>
+                                  <a href={p.lien} target="_blank" rel="noreferrer"
+                                    style={{...T.tag,fontSize:8,color:p.couleur,borderBottom:`1px solid ${p.couleur}44`,paddingBottom:1}}>
+                                    Fiche technique →
+                                  </a>
+                                  <motion.button whileHover={{scale:1.02}} whileTap={{scale:0.97}}
+                                    style={{...T.btn,flex:1,background:sel.produit?.id===p.id?p.couleur:"transparent",color:sel.produit?.id===p.id?"#fff":p.couleur,border:`1px solid ${p.couleur}`,padding:"9px",transition:"all .2s",cursor:"pointer"}}
+                                    onClick={e=>{e.stopPropagation();setSel(s=>({...s,produit:s.produit?.id===p.id?null:p}));}}>
+                                    {sel.produit?.id===p.id?"✓ Sélectionné":"Ajouter à ma sélection"}
+                                  </motion.button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+                <div style={{textAlign:"center",padding:"28px 20px",borderTop:`1px solid ${G.goldBorder}`,marginTop:8}}>
+                  <p style={{fontFamily:"'Cormorant Garamond',serif",fontSize:18,fontWeight:300,fontStyle:"italic",color:G.muted,lineHeight:1.7}}>
+                    Et encore bien d'autres produits à découvrir selon votre projet —<br/>
+                    <span style={{color:G.gold}}>n'hésitez pas à nous en parler lors de la visite.</span>
+                  </p>
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            )}
 
-        {/* ══ ESTIMATIF ══ */}
-        {tab==="calcul" && <Calculateur T={T} divider={divider} onDevis={()=>setModal(true)}/>}
+            {/* ══ ESTIMATIF ══ */}
+            {tab==="calcul" && <Calculateur T={T} divider={divider} onDevis={()=>setModal(true)}/>}
 
+          </motion.div>
+        </AnimatePresence>
       </main>
 
-      {/* ══ FOOTER CONTACT ══ */}
-      <footer style={{background:G.ink,padding:"32px 20px"}}>
-        <div style={{maxWidth:1060,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:32,alignItems:"center"}}>
+      {/* ══ FOOTER ══ */}
+      <footer style={{background:"#080808",borderTop:`1px solid ${G.goldBorder}`,padding:"32px 20px"}}>
+        <div className="footer-grid" style={{maxWidth:1060,margin:"0 auto",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:32,alignItems:"center"}}>
           <div style={{display:"flex",alignItems:"center",gap:12}}>
-            <Logo size={48}/>
+            <Logo size={44}/>
             <div>
-              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:300,color:G.white}}>Peinture & Rénovation</div>
-              <div style={{...T.p,fontSize:10,color:G.muted,marginTop:2}}>Pays d'Aix · Artisan d'Art</div>
+              <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,fontWeight:300,color:G.text}}>Peinture & Rénovation</div>
+              <div style={{...T.p,fontSize:10,marginTop:2}}>Pays d'Aix · Artisan d'Art</div>
             </div>
           </div>
           <div style={{textAlign:"center"}}>
-            {[{icon:"📞",t:"06 16 70 57 57",h:"tel:+33616705757"},{icon:"✉️",t:"peintureetrenovation13@gmail.com",h:"mailto:peintureetrenovation13@gmail.com"},{icon:"🌐",t:"peintureetrenovation.com",h:"https://www.peintureetrenovation.com"}].map((c,i)=>(
+            {[{icon:"📞",t:"06 16 70 57 57",h:"tel:+33616705757"},{icon:"✉️",t:"peintureetrenovation13@gmail.com",h:"mailto:peintureetrenovation13@gmail.com"}].map((c,i)=>(
               <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,marginBottom:8}}>
                 <span style={{fontSize:12}}>{c.icon}</span>
-                <a href={c.h} target="_blank" rel="noreferrer" style={{...T.p,fontSize:11,color:G.muted}}>{c.t}</a>
+                <a href={c.h} target="_blank" rel="noreferrer" style={{...T.p,fontSize:11}}>{c.t}</a>
               </div>
             ))}
           </div>
           <div style={{textAlign:"right"}}>
-            <button onClick={()=>setModal(true)} style={{...T.btn,background:G.gold,color:G.white,border:"none",padding:"12px 24px",cursor:"pointer"}}>
+            <motion.button whileHover={{scale:1.03,boxShadow:`0 0 24px rgba(200,151,58,.3)`}} whileTap={{scale:0.97}}
+              onClick={()=>setModal(true)} style={{...T.btn,background:G.gold,color:"#fff",border:"none",padding:"12px 24px",cursor:"pointer"}}>
               Demander un devis gratuit
-            </button>
-            <div style={{...T.p,fontSize:10,color:G.muted,marginTop:8}}>Visite et devis gratuits</div>
+            </motion.button>
+            <div style={{...T.p,fontSize:10,marginTop:8}}>Visite et devis gratuits</div>
           </div>
         </div>
       </footer>
 
-      {/* ══ MODAL ══ */}
-      {modal && (
-        <div style={{position:"fixed",inset:0,background:"#00000050",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setModal(false)}>
-          <div style={{background:G.white,padding:34,maxWidth:420,width:"100%",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 28px 80px #00000018"}} onClick={e=>e.stopPropagation()}>
-            {!sent ? (
-              <>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:18}}><Logo size={48}/></div>
-                <div style={{...T.tag,textAlign:"center",marginBottom:5}}>Devis gratuit</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:300,textAlign:"center",marginBottom:22}}>Votre sélection</div>
-                {[{l:"Votre prénom",ph:"ex: Marie",v:nom,fn:setNom},{l:"Pièce concernée",ph:"ex: Salon, façade…",v:piece,fn:setPiece}].map((fi,i)=>(
-                  <div key={i} style={{marginBottom:14}}>
-                    <div style={{...T.label,marginBottom:7}}>{fi.l}</div>
-                    <input style={{width:"100%",border:"none",borderBottom:`1px solid ${G.gold}`,padding:"9px 0",fontSize:14,fontWeight:300,background:"transparent",color:G.black,fontFamily:"'Jost',sans-serif",outline:"none"}} placeholder={fi.ph} value={fi.v} onChange={e=>fi.fn(e.target.value)}/>
-                  </div>
-                ))}
-                <div style={{marginBottom:18}}>
-                  <div style={{...T.label,marginBottom:10}}>Couleurs choisies</div>
-                  {sel.couleurs.length===0
-                    ? <p style={{...T.p,fontStyle:"italic",fontSize:12}}>Aucune couleur sélectionnée</p>
-                    : sel.couleurs.map(c=>(
-                      <div key={c.ref} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${G.border}`}}>
-                        <div style={{width:30,height:30,background:c.hex,flexShrink:0,border:`1px solid ${G.border}`}}/>
-                        <div>
-                          <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,color:G.black}}>{c.nom}</div>
-                          <div style={{...T.p,fontSize:10,marginTop:1,color:G.gold}}>{c.ref}</div>
-                        </div>
-                      </div>
-                    ))
-                  }
-                </div>
-                {sel.produit && (
-                  <div style={{marginBottom:18}}>
-                    <div style={{...T.label,marginBottom:10}}>Finition choisie</div>
-                    <div style={{padding:"8px 0",borderBottom:`1px solid ${G.border}`}}>
-                      <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14}}>{sel.produit.nom}</div>
-                      <div style={{...T.p,fontSize:10,marginTop:2}}>{sel.produit.marque}</div>
+      {/* ══ MODAL DEVIS ══ */}
+      <AnimatePresence>
+        {modal && (
+          <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}
+            style={{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}
+            onClick={()=>{setModal(false);setSent(false);}}>
+            <motion.div initial={{scale:0.94,opacity:0,y:20}} animate={{scale:1,opacity:1,y:0}} exit={{scale:0.96,opacity:0,y:12}}
+              transition={{duration:0.24,ease:[0.22,1,0.36,1]}}
+              style={{background:"#131313",border:`1px solid ${G.goldBorder}`,padding:32,maxWidth:440,width:"100%",maxHeight:"90vh",overflowY:"auto",boxShadow:"0 24px 80px rgba(0,0,0,.6)"}}
+              onClick={e=>e.stopPropagation()}>
+              {!sent ? (
+                <>
+                  <div style={{display:"flex",justifyContent:"center",marginBottom:18}}><Logo size={44}/></div>
+                  <div style={{...T.tag,textAlign:"center",marginBottom:5}}>Devis gratuit</div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:24,fontWeight:300,textAlign:"center",color:G.text,marginBottom:22}}>Votre sélection</div>
+                  <div style={{width:28,height:1,background:G.gold,margin:"0 auto 22px"}}/>
+                  {/* Champs */}
+                  {[{l:"Votre prénom *",ph:"ex: Marie",v:nom,fn:setNom},{l:"Téléphone",ph:"06 00 00 00 00",v:tel,fn:setTel},{l:"Pièce concernée",ph:"ex: Salon, façade…",v:piece,fn:setPiece}].map((fi,i)=>(
+                    <div key={i} style={{marginBottom:16}}>
+                      <div style={{...T.label,marginBottom:7}}>{fi.l}</div>
+                      <input style={{width:"100%",border:"none",borderBottom:`1px solid ${G.goldBorder}`,padding:"9px 0",fontSize:14,fontWeight:300,background:"transparent",color:G.text,fontFamily:"Inter,sans-serif",outline:"none"}}
+                        placeholder={fi.ph} value={fi.v} onChange={e=>fi.fn(e.target.value)}/>
                     </div>
+                  ))}
+                  {/* Couleurs */}
+                  <div style={{marginBottom:16}}>
+                    <div style={{...T.label,marginBottom:10}}>Couleurs choisies</div>
+                    {sel.couleurs.length===0
+                      ? <p style={{...T.p,fontStyle:"italic",fontSize:12}}>Aucune couleur sélectionnée</p>
+                      : sel.couleurs.map(c=>(
+                        <div key={c.ref} style={{display:"flex",alignItems:"center",gap:12,padding:"8px 0",borderBottom:`1px solid ${G.border}`}}>
+                          <div style={{width:28,height:28,background:c.hex,flexShrink:0,border:`1px solid ${G.goldBorder}`}}/>
+                          <div>
+                            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,color:G.text}}>{c.nom}</div>
+                            <div style={{...T.p,fontSize:10,marginTop:1,color:G.gold}}>{c.ref}</div>
+                          </div>
+                        </div>
+                      ))
+                    }
                   </div>
-                )}
-                <div style={{padding:"12px 14px",background:G.light,marginBottom:18}}>
-                  <div style={{...T.p,fontSize:11}}>📞 <strong>06 16 70 57 57</strong> · ✉️ peintureetrenovation13@gmail.com</div>
-                  <div style={{...T.p,fontSize:10,marginTop:4,fontStyle:"italic"}}>Votre artisan vous recontactera sous 24h pour convenir d'une visite gratuite.</div>
+                  {sel.produit && (
+                    <div style={{marginBottom:16}}>
+                      <div style={{...T.label,marginBottom:10}}>Finition choisie</div>
+                      <div style={{padding:"8px 0",borderBottom:`1px solid ${G.border}`}}>
+                        <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:14,color:G.text}}>{sel.produit.nom}</div>
+                        <div style={{...T.p,fontSize:10,marginTop:2}}>{sel.produit.marque}</div>
+                      </div>
+                    </div>
+                  )}
+                  <div style={{padding:"11px 14px",background:G.goldLt,border:`1px solid ${G.goldBorder}`,marginBottom:18}}>
+                    <div style={{...T.p,fontSize:11,color:G.text}}>📞 <strong style={{color:G.gold}}>06 16 70 57 57</strong> · peintureetrenovation13@gmail.com</div>
+                    <div style={{...T.p,fontSize:10,marginTop:4,fontStyle:"italic"}}>Axel vous recontactera sous 24h pour convenir d'une visite gratuite.</div>
+                  </div>
+                  <div style={{display:"flex",gap:10}}>
+                    <motion.button whileHover={{scale:1.01}} whileTap={{scale:0.97}} onClick={()=>setModal(false)}
+                      style={{...T.btn,flex:1,background:"transparent",border:`1px solid ${G.border}`,color:G.muted,padding:"11px",cursor:"pointer"}}>
+                      Annuler
+                    </motion.button>
+                    <motion.button whileHover={{scale:1.02,boxShadow:`0 0 22px rgba(200,151,58,.35)`}} whileTap={{scale:0.97}}
+                      onClick={sendDevis} disabled={sending||!nom.trim()}
+                      style={{...T.btn,flex:2,background:G.gold,color:"#fff",border:"none",padding:"11px",cursor:"pointer",opacity:sending||!nom.trim()?0.6:1,transition:"opacity .2s"}}>
+                      {sending?"Envoi…":"Envoyer →"}
+                    </motion.button>
+                  </div>
+                </>
+              ) : (
+                <div style={{textAlign:"center",padding:"16px 0"}}>
+                  <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><Logo size={52}/></div>
+                  <div style={{...T.tag,marginBottom:8}}>Merci !</div>
+                  <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:300,color:G.text,marginBottom:14}}>Sélection envoyée</div>
+                  <div style={{width:28,height:1,background:G.gold,margin:"0 auto 16px"}}/>
+                  <p style={{...T.p,marginBottom:12}}>{nom&&`Merci ${nom}. `}<em style={{fontFamily:"'Cormorant Garamond',serif",color:G.text}}>Axel Sandahl</em> vous recontactera sous 24h pour convenir d'une visite sur place.</p>
+                  <p style={{...T.p,fontSize:11,marginBottom:24}}>📞 06 16 70 57 57 · peintureetrenovation13@gmail.com</p>
+                  <motion.button whileHover={{scale:1.03}} whileTap={{scale:0.97}}
+                    onClick={()=>{setModal(false);setSent(false);setSel({couleurs:[],produit:null});}}
+                    style={{...T.btn,background:"transparent",border:`1px solid ${G.gold}`,color:G.gold,padding:"11px 28px",cursor:"pointer"}}>
+                    Fermer
+                  </motion.button>
                 </div>
-                <div style={{display:"flex",gap:10}}>
-                  <button onClick={()=>setModal(false)} style={{...T.btn,flex:1,background:"transparent",border:`1px solid ${G.border}`,color:G.gray,padding:"11px",cursor:"pointer"}}>Annuler</button>
-                  <a
-                    href={`mailto:peintureetrenovation13@gmail.com?subject=Demande de devis — ${nom||"Client"}&body=Bonjour Axel,%0A%0APrénom : ${nom||""}%0APièce : ${piece||""}%0ACouleurs : ${sel.couleurs.map(x=>x.nom+" ("+x.ref+")").join(", ")||"Non sélectionnées"}%0AFinition : ${sel.produit?sel.produit.nom:"Non sélectionnée"}%0A%0ACordialement`}
-                    onClick={()=>{if(count>0||nom)setSent(true);}}
-                    style={{...T.btn,flex:2,background:G.gold,color:G.white,border:"none",padding:"11px",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",textDecoration:"none"}}>
-                    Envoyer →
-                  </a>
-                </div>
-              </>
-            ):(
-              <div style={{textAlign:"center",padding:"16px 0"}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:16}}><Logo size={56}/></div>
-                <div style={{...T.tag,marginBottom:8}}>Merci !</div>
-                <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:26,fontWeight:300,marginBottom:14}}>Sélection envoyée</div>
-                <div style={{width:28,height:1,background:G.gold,margin:"0 auto 16px"}}/>
-                <p style={{...T.p,marginBottom:12}}>{nom&&`Merci ${nom}. `}<em style={{fontFamily:"'Cormorant Garamond',serif"}}>Axel Sandahl</em> vous recontactera sous 24h pour convenir d'une visite sur place.</p>
-                <p style={{...T.p,fontSize:11,marginBottom:24}}>📞 06 16 70 57 57 · peintureetrenovation13@gmail.com</p>
-                <button onClick={()=>{setModal(false);setSent(false);setSel({couleurs:[],produit:null});}} style={{...T.btn,background:"transparent",border:`1px solid ${G.gold}`,color:G.gold,padding:"11px 28px",cursor:"pointer"}}>Fermer</button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ══ CHATBOT ══ */}
+      <FloatingChat/>
     </div>
   );
 }
