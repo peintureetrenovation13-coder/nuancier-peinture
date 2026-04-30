@@ -682,6 +682,46 @@ function FloatingChat() {
 
 /* ═══ APP ═════════════════════════════════════════════════════ */
 export default function App() {
+  useEffect(() => {
+    const s = document.createElement("script");
+    s.type = "application/ld+json";
+    s.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Peinture & Rénovation",
+      "description": "Artisan peintre à Peynier, Pays d'Aix-en-Provence. Peinture intérieure et extérieure, rénovation complète, travaux artistiques, fresques, trompe l'œil.",
+      "telephone": "+33616705757",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Peynier",
+        "postalCode": "13790",
+        "addressRegion": "Bouches-du-Rhône",
+        "addressCountry": "FR"
+      },
+      "areaServed": "Pays d'Aix-en-Provence",
+      "founder": { "@type": "Person", "name": "Axel Sandahl" },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Services",
+        "itemListElement": [
+          { "@type":"Offer", "itemOffered":{ "@type":"Service", "name":"Peinture intérieure et extérieure" } },
+          { "@type":"Offer", "itemOffered":{ "@type":"Service", "name":"Rénovation complète tous corps d'état" } },
+          { "@type":"Offer", "itemOffered":{ "@type":"Service", "name":"Fresques murales" } },
+          { "@type":"Offer", "itemOffered":{ "@type":"Service", "name":"Trompe l'œil" } },
+          { "@type":"Offer", "itemOffered":{ "@type":"Service", "name":"Plâtrerie et enduits" } }
+        ]
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "5",
+        "reviewCount": "50",
+        "bestRating": "5"
+      }
+    });
+    document.head.appendChild(s);
+    return () => { try { document.head.removeChild(s); } catch(e) {} };
+  }, []);
+
   const [tab, setTab]         = useState("calcul");
   const [openPal, setOpenPal] = useState(null);
   const [selColor, setSelColor] = useState(null);
