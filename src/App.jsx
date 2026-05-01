@@ -149,7 +149,7 @@ const TARIFS_PREP = {
 };
 const TARIFS_PEINTURE = {
   mat:     { label:"Maotop Mat (Zolpan) — Maoline + 2 couches", min:18, max:27 },
-  velours: { label:"Class 1 Velours (Tollens) — Maoline + 2 couches", min:18, max:27 },
+  velours: { label:"Class 1 Velours (Tollens) — Maoline + 2 couches", min:20, max:29 },
 };
 const TARIF_PORTE = { min:80, max:140 };
 
@@ -233,7 +233,7 @@ const Room = ({ mur="#E8E2D6", plafond="#F5F2EC", sol="#C4A882", accent=null }) 
 
 /* ═══ CALCULATEUR ════════════════════════════════════════════ */
 function Calculateur({ T, divider, onDevis }) {
-  const [f, setF] = useState({ surface:"", pieces:1, portesMenuis:"0", etat:"bon", finition:"mat" });
+  const [f, setF] = useState({ surface:"", pieces:1, portesMenuis:"0", etat:"bon", finition:"mat", hauteur:2.5 });
   const [res, setRes] = useState(null);
   const [sendOpen, setSendOpen]     = useState(false);
   const [sendNom, setSendNom]       = useState("");
@@ -255,7 +255,10 @@ function Calculateur({ T, divider, onDevis }) {
   const calc = () => {
     const sol=parseFloat(f.surface)||0; if(sol<=0) return;
     const pm=parseInt(f.portesMenuis)||0;
-    const mNet=Math.round(sol*2.8);
+    const racine=Math.sqrt(sol);
+    const mursExt=4*racine*f.hauteur;
+    const cloisons=(parseInt(f.pieces)-1)*racine*f.hauteur*2;
+    const mNet=Math.round(mursExt+cloisons);
     const total=mNet+sol;
     const prep=TARIFS_PREP[f.etat], fin=TARIFS_PEINTURE[f.finition];
     const pMin=Math.round(total*prep.min), pMax=Math.round(total*prep.max);
@@ -303,6 +306,26 @@ function Calculateur({ T, divider, onDevis }) {
                     +
                   </motion.button>
                   <span style={{...T.p,fontSize:12}}>pièce{f.pieces>1?"s":""}</span>
+                </div>
+              </div>
+              <div style={{marginBottom:18}}>
+                <label style={{...T.label,display:"block",marginBottom:10}}>
+                  Hauteur sous plafond
+                  <span style={{...T.p,fontSize:10,fontWeight:300,textTransform:"none",letterSpacing:0,marginLeft:6}}>m</span>
+                </label>
+                <div style={{display:"flex",alignItems:"center",gap:14}}>
+                  <motion.button whileTap={{scale:0.88}} onClick={()=>set("hauteur",Math.round(Math.max(2.2,f.hauteur-0.1)*10)/10)}
+                    style={{width:36,height:36,border:`1px solid ${G.goldBorder}`,background:"transparent",color:G.text,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:300}}>
+                    −
+                  </motion.button>
+                  <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:30,fontWeight:400,color:G.gold,minWidth:52,textAlign:"center",lineHeight:1}}>
+                    {f.hauteur.toFixed(2)}
+                  </span>
+                  <motion.button whileTap={{scale:0.88}} onClick={()=>set("hauteur",Math.round(Math.min(4.0,f.hauteur+0.1)*10)/10)}
+                    style={{width:36,height:36,border:`1px solid ${G.goldBorder}`,background:"transparent",color:G.text,fontSize:20,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontWeight:300}}>
+                    +
+                  </motion.button>
+                  <span style={{...T.p,fontSize:12}}>m</span>
                 </div>
               </div>
               <div style={{marginBottom:18}}>
@@ -376,6 +399,7 @@ function Calculateur({ T, divider, onDevis }) {
                 <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:32,fontWeight:400,color:G.gold}}>{res.totalMin.toLocaleString()} – {res.totalMax.toLocaleString()} €</div>
               </div>
               <div style={{...T.p,fontSize:11,fontStyle:"italic",maxWidth:280}}>Estimation indicative fournitures + main-d'œuvre. Devis précis après visite gratuite.</div>
+              <div style={{...T.p,fontSize:10,color:G.muted,marginTop:8}}>* Prix basés sur le marché actuel — devis personnalisé sur demande</div>
             </div>
           </div>
           <AnimatePresence>
