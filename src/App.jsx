@@ -561,7 +561,7 @@ function FloatingChat() {
     }
   };
 
-  const sendMsg = () => {
+  const sendMsg = async () => {
     const txt = input.trim();
     if (!txt) return;
     setMsgs(p => [...p, { from:"user", text:txt }]);
@@ -615,9 +615,29 @@ function FloatingChat() {
     } else if (HAS(t,"merci","super","parfait","excellent","nickel","top")) {
       botReply("Merci à vous, c'est un plaisir ! N'hésitez pas à revenir si vous avez d'autres questions — nous sommes disponibles du lundi au samedi. À bientôt !");
     } else {
-      botReply("Hmm, je ne suis pas sûr de bien vous suivre sur ce point ! Pour toute question, vous pouvez appeler Axel au 06 16 70 57 57 — ou utiliser le formulaire ci-dessous. Il sera heureux de vous répondre !", {
-        btns:[{ label:"Demander un devis", action:"devis" }, { label:"Nous appeler", action:"appeler" }]
-      });
+      setTyping(true);
+      setQuickBtns(null);
+      try {
+        const apiMsgs = [
+          ...msgs.filter(m => m.from === "user" || m.from === "bot").map(m => ({
+            role: m.from === "user" ? "user" : "assistant",
+            content: m.text
+          })),
+          { role: "user", content: txt }
+        ];
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messages: apiMsgs })
+        });
+        const data = await res.json();
+        const reply = data.content?.[0]?.text ?? "Désolé, je n'ai pas pu répondre. Appelez Axel au 06 16 70 57 57 !";
+        setMsgs(p => [...p, { from:"bot", text:reply }]);
+      } catch {
+        setMsgs(p => [...p, { from:"bot", text:"Désolé, je n'ai pas pu répondre. Appelez Axel au 06 16 70 57 57 !" }]);
+      } finally {
+        setTyping(false);
+      }
     }
   };
 
